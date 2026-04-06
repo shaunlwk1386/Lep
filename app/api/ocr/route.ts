@@ -22,6 +22,7 @@ Rules:
 
 export async function POST(request: Request) {
   const apiKey = process.env.ANTHROPIC_API_KEY
+  console.log('[OCR] API key present:', !!apiKey, '| key prefix:', apiKey?.slice(0, 10))
   if (!apiKey) {
     return NextResponse.json({ error: 'ANTHROPIC_API_KEY not set' }, { status: 500 })
   }

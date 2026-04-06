@@ -786,11 +786,18 @@ async function runClaudeVisionOcr(imageFile: File): Promise<DetectedService[] | 
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ image: base64, mediaType }),
     })
-    if (!res.ok) return null
+    console.log('[Claude Vision] response status:', res.status)
+    if (!res.ok) {
+      const err = await res.text()
+      console.error('[Claude Vision] error response:', err)
+      return null
+    }
     const json = await res.json()
+    console.log('[Claude Vision] response:', JSON.stringify(json))
     if (!Array.isArray(json.services)) return null
     return json.services as DetectedService[]
-  } catch {
+  } catch (e) {
+    console.error('[Claude Vision] fetch error:', e)
     return null
   }
 }
