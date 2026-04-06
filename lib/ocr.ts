@@ -407,7 +407,7 @@ function scoreOcrText(text: string): number {
   // Reward numbers in the service price range — each one is likely real data.
   const prices = [...text.matchAll(/\d+/g)]
     .map(m => Number(m[0]))
-    .filter(n => n >= 50 && n <= 2000)
+    .filter(n => n >= 50 && n <= 5000)
   score += prices.length * 5
 
   // Reward lines that look like complete service entries (Thai text + number).
@@ -465,7 +465,7 @@ export function cleanOcrText(text: string): string {
       // This prevents date numbers, noise numbers etc. from surviving
       if (hasDigit) {
         const nums = [...line.matchAll(/\d+/g)].map(m => Number(m[0]))
-        return nums.some(n => n >= 50 && n <= 2000)
+        return nums.some(n => n >= 50 && n <= 5000)
       }
 
       return false
@@ -572,7 +572,7 @@ function isSummaryLine(line: string): boolean {
   // Lines with 3+ distinct valid numbers are almost certainly totals rows
   const nums = [...line.matchAll(/\d+/g)]
     .map(m => Number(m[0]))
-    .filter(n => n >= 50 && n <= 2000)
+    .filter(n => n >= 50 && n <= 5000)
   if (nums.length >= 3) return true
   return false
 }
@@ -600,7 +600,7 @@ function extractAmount(line: string): { amount: number; idx: number } | null {
   const lineNoBracket = line.replace(/\([^)]*\)?$/g, ' ')
   const nums = [...lineNoBracket.matchAll(/\d+/g)]
     .map(m => ({ val: Number(m[0]), idx: m.index! }))
-    .filter(n => n.val >= 50 && n.val <= 2000)
+    .filter(n => n.val >= 50 && n.val <= 5000)
   if (nums.length === 0) return null
   const last = nums[nums.length - 1]
   return { amount: last.val, idx: last.idx }
@@ -631,7 +631,7 @@ function isDashFormat(line: string): boolean {
   // At least one segment must contain a number in price range
   return parts.some(p => {
     const n = Number(p.trim().match(/\d+/)?.[0])
-    return n >= 50 && n <= 2000
+    return n >= 50 && n <= 5000
   })
 }
 
@@ -643,7 +643,7 @@ function parseDashLine(line: string): DetectedService | null {
   let priceIdx = -1
   for (let i = 0; i < parts.length; i++) {
     const n = Number(parts[i].match(/\d+/)?.[0])
-    if (n >= 50 && n <= 2000) { amount = n; priceIdx = i; break }
+    if (n >= 50 && n <= 5000) { amount = n; priceIdx = i; break }
   }
   if (!amount) return null
 
