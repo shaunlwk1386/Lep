@@ -2,8 +2,8 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { useParams } from "next/navigation";
-import { getLog, type DailyLog, type Service } from "@/lib/db";
+import { useParams, useRouter } from "next/navigation";
+import { getLog, deleteLog, type DailyLog, type Service } from "@/lib/db";
 
 function formatDate(dateStr: string) {
   const date = new Date(dateStr);
@@ -14,12 +14,21 @@ function formatDate(dateStr: string) {
 
 export default function LogDetailPage() {
   const { id } = useParams<{ id: string }>();
+  const router = useRouter();
   const [log, setLog] = useState<DailyLog | null>(null);
   const [loading, setLoading] = useState(true);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     getLog(id).then((data) => { setLog(data); setLoading(false); });
   }, [id]);
+
+  async function handleDelete() {
+    if (!confirm("ลบรายการนี้? / Delete this log?")) return;
+    setDeleting(true);
+    await deleteLog(id);
+    router.push("/");
+  }
 
   if (loading) {
     return (
@@ -115,12 +124,19 @@ export default function LogDetailPage() {
         </div>
       </div>
 
-      <div className="fixed bottom-6 left-0 right-0 px-4 max-w-md mx-auto">
+      <div className="fixed bottom-6 left-0 right-0 px-4 max-w-md mx-auto flex gap-3">
+        <button
+          onClick={handleDelete}
+          disabled={deleting}
+          className="flex-1 border border-red-200 text-red-400 font-semibold rounded-2xl py-4 shadow-sm transition-colors disabled:opacity-50"
+        >
+          ลบ / Delete
+        </button>
         <Link
           href={`/log/${log.id}/edit`}
-          className="flex items-center justify-center w-full bg-[#9575B5] hover:bg-[#8B6BAD] active:bg-[#7A5C9C] text-white font-semibold rounded-2xl py-4 shadow-lg transition-colors"
+          className="flex-1 flex items-center justify-center bg-[#9575B5] hover:bg-[#8B6BAD] active:bg-[#7A5C9C] text-white font-semibold rounded-2xl py-4 shadow-lg transition-colors"
         >
-          แก้ไข / Edit this day
+          แก้ไข / Edit
         </Link>
       </div>
     </div>

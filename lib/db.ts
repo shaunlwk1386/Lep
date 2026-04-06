@@ -4,6 +4,7 @@ export type Service = {
   id: string
   description: string
   amount: number
+  payment: 'cash' | 'transfer'
 }
 
 export type DailyLog = {
@@ -14,6 +15,7 @@ export type DailyLog = {
   services: Service[]
   total_amount: number
   cash_amount: number
+  commission_rate: number
   image_log_url: string | null
   image_cash_url: string | null
   created_at: string
@@ -27,6 +29,7 @@ export async function saveLog(data: {
   services: Service[]
   total_amount: number
   cash_amount: number
+  commission_rate: number
   image_log_url?: string
   image_cash_url?: string
 }) {
@@ -40,6 +43,7 @@ export async function updateLog(id: string, data: {
   services: Service[]
   total_amount: number
   cash_amount: number
+  commission_rate: number
 }) {
   const { error } = await supabase
     .from('daily_logs')
