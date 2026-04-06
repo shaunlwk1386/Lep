@@ -65,7 +65,7 @@ export default function ReviewPage() {
       });
       router.push("/");
     } catch (e) {
-      alert("Error saving. Please try again.");
+      alert("Error: " + (e instanceof Error ? e.message : String(e)));
     } finally {
       setSaving(false);
     }
