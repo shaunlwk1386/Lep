@@ -81,13 +81,13 @@ export async function POST(request: Request) {
     const data = await res.json()
     const text = data.content?.[0]?.text ?? '[]'
 
-    // Parse the JSON array Claude returned
+    // Parse the JSON array Claude returned — strip markdown fences if present
     let services: Array<{ description: string; amount: number; payment: string }> = []
     try {
-      const parsed = JSON.parse(text.trim())
+      const cleaned = text.trim().replace(/^```[a-z]*\n?/i, '').replace(/```$/,'').trim()
+      const parsed = JSON.parse(cleaned)
       if (Array.isArray(parsed)) services = parsed
     } catch {
-      // Claude returned something unexpected — return empty
       console.warn('[OCR API] Failed to parse Claude response:', text)
     }
 
