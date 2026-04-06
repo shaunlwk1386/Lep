@@ -752,11 +752,66 @@ function preprocessImage(file: File): Promise<Blob> {
 // The fallback guarantees the app never breaks due to the new pipeline.
 // ═══════════════════════════════════════════════════════════════════════════════
 
+// ── Claude Vision: resize image to max 800px and convert to base64 ──────────
+// Smaller image = fewer tokens = lower cost. 800px is sufficient for handwriting.
+async function resizeToBase64(file: File, maxDim = 800): Promise<{ base64: string; mediaType: string }> {
+  return new Promise((resolve) => {
+    const img = new Image()
+    const url = URL.createObjectURL(file)
+    img.onload = () => {
+      let { width, height } = img
+      if (width > maxDim || height > maxDim) {
+        const ratio = Math.min(maxDim / width, maxDim / height)
+        width = Math.round(width * ratio)
+        height = Math.round(height * ratio)
+      }
+      const canvas = document.createElement('canvas')
+      canvas.width = width; canvas.height = height
+      canvas.getContext('2d')!.drawImage(img, 0, 0, width, height)
+      URL.revokeObjectURL(url)
+      // Use JPEG at 0.85 quality — good enough for text, much smaller than PNG
+      const dataUrl = canvas.toDataURL('image/jpeg', 0.85)
+      const base64 = dataUrl.split(',')[1]
+      resolve({ base64, mediaType: 'image/jpeg' })
+    }
+    img.src = url
+  })
+}
+
+async function runClaudeVisionOcr(imageFile: File): Promise<DetectedService[] | null> {
+  try {
+    const { base64, mediaType } = await resizeToBase64(imageFile)
+    const res = await fetch('/api/ocr', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ image: base64, mediaType }),
+    })
+    if (!res.ok) return null
+    const json = await res.json()
+    if (!Array.isArray(json.services)) return null
+    return json.services as DetectedService[]
+  } catch {
+    return null
+  }
+}
+
 export async function runOcr(imageFile: File): Promise<OcrResult> {
+  // ── Path 1: Claude Vision (primary — most accurate) ───────────────────────
+  const claudeServices = await runClaudeVisionOcr(imageFile)
+  if (claudeServices && claudeServices.length > 0) {
+    if (OCR_CONFIG.DEBUG && typeof window !== 'undefined') {
+      ;(window as any).__lep_ocr_debug = { source: 'claude-vision', services: claudeServices }
+      console.debug('[Lep OCR] Claude Vision succeeded:', claudeServices.length, 'rows')
+    }
+    const numbers = claudeServices.map(s => s.amount).filter(n => n >= 50)
+    return { rawText: '', numbers, detectedServices: claudeServices }
+  }
+
+  // ── Path 2: Tesseract multi-attempt (fallback) ────────────────────────────
+  console.warn('[OCR] Claude Vision unavailable — falling back to Tesseract')
   let rawText = ''
   let debugInfo: OcrDebugInfo | null = null
 
-  // ── Enhanced path: multi-attempt OCR ──────────────────────────────────────
   if (OCR_CONFIG.MULTI_ATTEMPT) {
     try {
       const result = await runMultiAttemptOcr(imageFile)
@@ -764,16 +819,14 @@ export async function runOcr(imageFile: File): Promise<OcrResult> {
       debugInfo = {
         attempts: result.debugAttempts,
         selectedAttempt: result.selectedAttempt,
-        cleanedText: '',  // filled in below
+        cleanedText: '',
         finalText: '',
       }
     } catch (e) {
-      console.warn('[OCR] Multi-attempt pipeline failed — falling back to original single-pass:', e)
-      rawText = '' // trigger fallback below
+      console.warn('[OCR] Multi-attempt failed:', e)
     }
   }
 
-  // ── Fallback path: single-pass OCR using same createWorker path for consistency ──
   if (!rawText) {
     try {
       const preprocessed = await preprocessImage(imageFile)
@@ -786,40 +839,25 @@ export async function runOcr(imageFile: File): Promise<OcrResult> {
         await fallbackWorker.terminate()
       }
     } catch (e) {
-      console.error('[OCR] Fallback single-pass also failed:', e)
-      rawText = ''
+      console.error('[OCR] Tesseract fallback also failed:', e)
     }
   }
 
-  // ── Post-processing cleanup ───────────────────────────────────────────────
   const cleanedText = cleanOcrText(rawText)
 
-  const finalText = cleanedText
-
-  // ── Debug output (browser only, does not affect UI) ───────────────────────
-  // Inspect in browser console: window.__lep_ocr_debug
   if (OCR_CONFIG.DEBUG && typeof window !== 'undefined') {
-    if (debugInfo) {
-      debugInfo.cleanedText = cleanedText
-      debugInfo.finalText   = finalText
-    }
-    ;(window as any).__lep_ocr_debug = debugInfo ?? { rawText, cleanedText, finalText }
-    console.debug(
-      '[Lep OCR]',
-      debugInfo?.attempts.map(a => `${a.variant}: score=${a.score}`).join(' | ') ?? 'single-pass',
-      `→ selected: ${debugInfo?.attempts[debugInfo.selectedAttempt]?.variant ?? 'fallback'}`,
-    )
+    if (debugInfo) { debugInfo.cleanedText = cleanedText; debugInfo.finalText = cleanedText }
+    ;(window as any).__lep_ocr_debug = debugInfo ?? { source: 'tesseract', rawText, cleanedText }
+    console.debug('[Lep OCR] Tesseract fallback used')
   }
 
-  // ── Extract numbers and parse service lines ───────────────────────────────
-  const matches = finalText.match(/\d+(\.\d+)?/g) ?? []
+  const matches = cleanedText.match(/\d+(\.\d+)?/g) ?? []
   const numbers = [...new Set(
     matches.map(Number).filter((n) => n >= 50 && n <= 100000)
   )].sort((a, b) => b - a)
 
-  const detectedServices = parseLines(finalText)
-
-  return { rawText: finalText, numbers, detectedServices }
+  const detectedServices = parseLines(cleanedText)
+  return { rawText: cleanedText, numbers, detectedServices }
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
