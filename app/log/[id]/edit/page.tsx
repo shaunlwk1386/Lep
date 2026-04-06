@@ -40,7 +40,7 @@ export default function EditLogPage() {
   }
 
   return (
-    <div className="max-w-md mx-auto px-4 pt-6 pb-32 min-h-screen">
+    <div className="w-full max-w-md mx-auto px-5 pt-8 pb-32 min-h-screen">
       {/* Header */}
       <div className="flex items-center gap-3 mb-6">
         <Link href="/history" className="text-[#8B6BAD] text-sm">← กลับ / Back</Link>
