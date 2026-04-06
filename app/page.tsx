@@ -54,7 +54,7 @@ export default function DashboardPage() {
   });
 
   return (
-    <div className="max-w-md mx-auto px-4 pb-24 pt-6 min-h-screen">
+    <div className="w-full max-w-md mx-auto px-5 pb-24 pt-8 min-h-screen">
       {/* Header */}
       <div className="mb-6">
         <div className="flex items-baseline gap-2">

@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Sarabun } from "next/font/google";
 import "./globals.css";
 
@@ -11,6 +11,12 @@ const sarabun = Sarabun({
 export const metadata: Metadata = {
   title: "เล็บ | Lep",
   description: "Daily nail log tracker",
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
 };
 
 export default function RootLayout({
