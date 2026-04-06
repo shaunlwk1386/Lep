@@ -45,7 +45,6 @@ export default function NewLogPage() {
             ref={logInputRef}
             type="file"
             accept="image/*"
-            capture="environment"
             onChange={handleLogImage}
             className="hidden"
           />
@@ -80,7 +79,6 @@ export default function NewLogPage() {
             ref={cashInputRef}
             type="file"
             accept="image/*"
-            capture="environment"
             onChange={handleCashImage}
             className="hidden"
           />
