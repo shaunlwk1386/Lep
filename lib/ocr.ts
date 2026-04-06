@@ -438,8 +438,16 @@ function scoreOcrText(text: string): number {
  * Conservative: only removes lines with zero Thai AND zero digit content.
  * Does not translate, rewrite, or guess at content.
  */
+// Thai digit → Arabic digit mapping (๐=0, ๑=1, ... ๙=9)
+const THAI_DIGIT_MAP: Record<string, string> = {
+  '๐':'0','๑':'1','๒':'2','๓':'3','๔':'4','๕':'5','๖':'6','๗':'7','๘':'8','๙':'9'
+}
+function normalizeThaiDigits(text: string): string {
+  return text.replace(/[๐-๙]/g, c => THAI_DIGIT_MAP[c] ?? c)
+}
+
 export function cleanOcrText(text: string): string {
-  return text
+  return normalizeThaiDigits(text)
     .split('\n')
     .map(line => line.replace(/[ \t]+/g, ' ').trim())
     .filter(line => {
@@ -579,6 +587,8 @@ function extractPayment(line: string): 'cash' | 'transfer' {
   if (/เงินสด|เงนสด|เง[นง]|งน|สด|cash/i.test(checkText)) return 'cash'
   // Priority 2: inline keyword anywhere on line (no bracket needed)
   if (/เงินสด|สด|cash/i.test(line)) return 'cash'
+  // โอน variants seen in OCR: ไอน, โอน, ใอน — all mean transfer (default anyway, but explicit is better)
+  // No action needed — transfer is already the default return value
   return 'transfer'
 }
 
