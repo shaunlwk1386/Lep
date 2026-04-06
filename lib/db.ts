@@ -54,7 +54,8 @@ export async function updateLog(id: string, data: {
 
 // Delete a log
 export async function deleteLog(id: string) {
-  const { error } = await supabase.from('daily_logs').delete().eq('id', id)
+  const { error, data } = await supabase.from('daily_logs').delete().eq('id', id).select()
+  console.log('[deleteLog] id:', id, '| deleted:', data, '| error:', error)
   if (error) throw error
 }
 
