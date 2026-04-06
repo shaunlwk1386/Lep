@@ -14,6 +14,9 @@ export const metadata: Metadata = {
   other: {
     "color-scheme": "light",
   },
+  icons: {
+    apple: "/apple-touch-icon.png",
+  },
 };
 
 export const viewport: Viewport = {
