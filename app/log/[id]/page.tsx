@@ -27,7 +27,7 @@ export default function LogDetailPage() {
     if (!confirm("ลบรายการนี้? / Delete this log?")) return;
     setDeleting(true);
     await deleteLog(id);
-    router.push("/");
+    window.location.href = "/";
   }
 
   if (loading) {
