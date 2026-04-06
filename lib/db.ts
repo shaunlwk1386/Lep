@@ -31,7 +31,7 @@ export async function saveLog(data: {
   image_cash_url?: string
 }) {
   const { error } = await supabase.from('daily_logs').insert([data])
-  if (error) throw error
+  if (error) throw new Error(error.message)
 }
 
 // Update an existing log
