@@ -76,25 +76,23 @@ function parseLines(rawText: string): DetectedService[] {
       else if (/โอน|transfer/i.test(bracketText)) payment = 'transfer'
     }
 
-    // Rule 4: Extract number that appears before บาท/บ or at end of line before bracket
-    // Pattern: Thai text ... NUMBER บาท (payment)
-    const priceMatch = line.match(/(\d{2,4})\s*(?:บาท|บ\.?)\s*(?:\([^)]*\))?$/) ||
-                       line.match(/(\d{2,4})\s*(?:\([^)]*\))?$/)
-    if (!priceMatch) continue
+    // Rule 4: Find any number between 50-2000 on the line
+    const allNums = [...line.matchAll(/\d+/g)]
+      .map((m) => ({ val: Number(m[0]), idx: m.index! }))
+      .filter((n) => n.val >= 50 && n.val <= 2000)
 
-    const amount = Number(priceMatch[1])
+    if (allNums.length === 0) continue
 
-    // Rule 5: Nail service price range — 50 to 2000 baht only
-    if (amount < 50 || amount > 2000) continue
+    // Pick the first valid number (service price is usually the first number on the line)
+    const { val: amount, idx: numIdx } = allNums[0]
 
-    // Rule 6: Extract service text — everything BEFORE the number
-    const numberIndex = line.lastIndexOf(priceMatch[1])
-    const serviceText = line.slice(0, numberIndex).trim()
+    // Rule 5: Extract service text — everything BEFORE the number
+    const serviceText = line.slice(0, numIdx).trim()
 
-    // Rule 7: Service text must have some Thai content
+    // Rule 6: Service text must have some Thai content
     if (!/[\u0E00-\u0E7F]/.test(serviceText)) continue
 
-    // Rule 8: Match service name from known list using only the service text
+    // Rule 7: Match service name from known list using only the service text
     const matched = matchService(serviceText)
     const description = matched ? matched.th : ''
 
