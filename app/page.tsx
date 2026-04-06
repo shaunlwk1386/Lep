@@ -116,13 +116,13 @@ export default function DashboardPage() {
           alt=""
           width={96}
           height={96}
-          className="absolute -top-4 right-0 opacity-90 pointer-events-none"
+          className="absolute -top-4 right-6 opacity-90 pointer-events-none"
         />
         <div className="flex items-baseline gap-2">
-          <h1 className="text-2xl font-bold text-gray-900">เล็บ</h1>
+          <h1 className="text-3xl font-extrabold text-gray-900">เล็บ</h1>
           <span className="text-xs text-gray-600">Lep by egg v1.0</span>
         </div>
-        <p className="text-sm text-gray-500">ซาลี่ · Saly</p>
+        <p className="text-base font-semibold text-gray-600">ซาลี่ · Saly</p>
         <p className="text-sm text-gray-500">{todayTh}</p>
         <p className="text-xs text-gray-600">{todayEn}</p>
       </div>
@@ -133,14 +133,14 @@ export default function DashboardPage() {
           <button
             key={tab.key}
             onClick={() => setActiveTab(tab.key)}
-            className={`flex-1 rounded-lg py-2 text-xs font-medium transition-all ${
+            className={`flex-1 rounded-lg py-2.5 text-sm font-medium transition-all ${
               activeTab === tab.key
                 ? "bg-white text-[#8B6BAD] shadow-sm"
                 : "text-gray-600"
             }`}
           >
             <span className="block">{tab.labelTh}</span>
-            <span className="block text-[10px] font-normal opacity-70">{tab.labelEn}</span>
+            <span className="block text-xs font-normal opacity-70">{tab.labelEn}</span>
           </button>
         ))}
       </div>
