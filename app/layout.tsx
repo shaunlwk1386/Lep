@@ -11,6 +11,9 @@ const sarabun = Sarabun({
 export const metadata: Metadata = {
   title: "เล็บ | Lep",
   description: "Daily nail log tracker",
+  other: {
+    "color-scheme": "light",
+  },
 };
 
 export const viewport: Viewport = {
