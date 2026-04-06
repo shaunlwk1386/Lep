@@ -191,9 +191,14 @@ export default function DashboardPage() {
             <p className="text-sm font-semibold text-gray-700">รายการล่าสุด</p>
             <p className="text-xs text-gray-600">Recent logs</p>
           </div>
-          <Link href="/history" className="text-xs text-[#8B6BAD] font-medium">
-            ดูทั้งหมด / View all
-          </Link>
+          <div className="flex gap-3">
+            <Link href="/photos" className="text-xs text-[#8B6BAD] font-medium">
+              รูปภาพ / Photos
+            </Link>
+            <Link href="/history" className="text-xs text-[#8B6BAD] font-medium">
+              ดูทั้งหมด / View all
+            </Link>
+          </div>
         </div>
 
         <div className="space-y-2">

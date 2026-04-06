@@ -171,7 +171,7 @@ export default function ReviewPage() {
       const ext = blob.type.includes("png") ? "png" : "jpg";
       const path = `${Date.now()}_${filename}.${ext}`;
       const { error } = await supabase.storage.from(bucket).upload(path, compressed, { contentType: "image/jpeg" });
-      if (error) return null;
+      if (error) { console.error('[Upload] Supabase error:', bucket, error.message); return null; }
       const { data } = supabase.storage.from(bucket).getPublicUrl(path);
       return data.publicUrl;
     } catch {
