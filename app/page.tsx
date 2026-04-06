@@ -1,21 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
-
-// Mock data — will be replaced with real Supabase data later
-const stats = {
-  today: { total: 1200, cash: 500, transferred: 700 },
-  week: { total: 4200, cash: 1800, transferred: 2400 },
-  month: { total: 18500, cash: 7200, transferred: 11300 },
-};
-
-const recentLogs = [
-  { id: "1", date: "2026-04-05", total: 1200, cash: 500, transferred: 700 },
-  { id: "2", date: "2026-04-04", total: 900, cash: 400, transferred: 500 },
-  { id: "3", date: "2026-04-03", total: 1500, cash: 600, transferred: 900 },
-  { id: "4", date: "2026-04-02", total: 600, cash: 300, transferred: 300 },
-];
+import { useState, useEffect } from "react";
+import { getLogs, type DailyLog } from "@/lib/db";
 
 const tabs = [
   { key: "today", labelTh: "วันนี้", labelEn: "Today" },
@@ -34,24 +21,66 @@ function formatDate(dateStr: string) {
   });
 }
 
+function getDateRanges() {
+  const now = new Date();
+
+  // Today
+  const todayStr = now.toISOString().split("T")[0];
+
+  // Week: Monday to today
+  const day = now.getDay();
+  const diffToMonday = (day === 0 ? -6 : 1 - day);
+  const monday = new Date(now);
+  monday.setDate(now.getDate() + diffToMonday);
+  const weekStart = monday.toISOString().split("T")[0];
+
+  // Month: 1st to today
+  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split("T")[0];
+
+  return { todayStr, weekStart, monthStart };
+}
+
+function sumLogs(logs: DailyLog[]) {
+  return logs.reduce(
+    (acc, log) => ({
+      total: acc.total + log.total_amount,
+      cash: acc.cash + log.cash_amount,
+      transferred: acc.transferred + (log.total_amount - log.cash_amount),
+    }),
+    { total: 0, cash: 0, transferred: 0 }
+  );
+}
+
 export default function DashboardPage() {
   const [activeTab, setActiveTab] = useState<TabKey>("today");
+  const [logs, setLogs] = useState<DailyLog[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const current = stats[activeTab];
+  useEffect(() => {
+    getLogs().then((data) => {
+      setLogs(data);
+      setLoading(false);
+    });
+  }, []);
+
+  const { todayStr, weekStart, monthStart } = getDateRanges();
+
+  const todayLogs = logs.filter((l) => l.date === todayStr);
+  const weekLogs = logs.filter((l) => l.date >= weekStart && l.date <= todayStr);
+  const monthLogs = logs.filter((l) => l.date >= monthStart && l.date <= todayStr);
+
+  const statsMap = {
+    today: sumLogs(todayLogs),
+    week: sumLogs(weekLogs),
+    month: sumLogs(monthLogs),
+  };
+
+  const current = statsMap[activeTab];
+  const recentLogs = logs.slice(0, 5);
 
   const now = new Date();
-  const todayTh = now.toLocaleDateString("th-TH", {
-    weekday: "long",
-    day: "numeric",
-    month: "long",
-    year: "numeric",
-  });
-  const todayEn = now.toLocaleDateString("en-GB", {
-    weekday: "long",
-    day: "numeric",
-    month: "long",
-    year: "numeric",
-  });
+  const todayTh = now.toLocaleDateString("th-TH", { weekday: "long", day: "numeric", month: "long", year: "numeric" });
+  const todayEn = now.toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long", year: "numeric" });
 
   return (
     <div className="w-full max-w-md mx-auto px-5 pb-24 pt-8 min-h-screen">
@@ -86,30 +115,34 @@ export default function DashboardPage() {
 
       {/* Stat Card */}
       <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 mb-8">
-        <div className="space-y-3">
-          <div className="flex justify-between items-center">
-            <div>
-              <p className="text-xs text-gray-600">รวมทั้งหมด</p>
-              <p className="text-[10px] text-gray-500">Total earned</p>
+        {loading ? (
+          <p className="text-sm text-gray-400 text-center py-4">กำลังโหลด... / Loading...</p>
+        ) : (
+          <div className="space-y-3">
+            <div className="flex justify-between items-center">
+              <div>
+                <p className="text-xs text-gray-600">รวมทั้งหมด</p>
+                <p className="text-[10px] text-gray-500">Total earned</p>
+              </div>
+              <p className="text-2xl font-bold text-gray-800">฿{current.total.toLocaleString()}</p>
             </div>
-            <p className="text-2xl font-bold text-gray-800">฿{current.total.toLocaleString()}</p>
-          </div>
-          <div className="flex justify-between items-center">
-            <div>
-              <p className="text-xs text-gray-600">รับเป็นเงินสด</p>
-              <p className="text-[10px] text-gray-500">Cash received</p>
+            <div className="flex justify-between items-center">
+              <div>
+                <p className="text-xs text-gray-600">รับเป็นเงินสด</p>
+                <p className="text-[10px] text-gray-500">Cash received</p>
+              </div>
+              <p className="text-base font-medium text-gray-600">฿{current.cash.toLocaleString()}</p>
             </div>
-            <p className="text-base font-medium text-gray-600">฿{current.cash.toLocaleString()}</p>
-          </div>
-          <div className="h-px bg-gray-100" />
-          <div className="flex justify-between items-center">
-            <div>
-              <p className="text-xs font-medium text-[#8B6BAD]">ยอดโอน</p>
-              <p className="text-[10px] text-[#C5A8D9]">Transferred</p>
+            <div className="h-px bg-gray-100" />
+            <div className="flex justify-between items-center">
+              <div>
+                <p className="text-xs font-medium text-[#8B6BAD]">ยอดโอน</p>
+                <p className="text-[10px] text-[#C5A8D9]">Transferred</p>
+              </div>
+              <p className="text-xl font-bold text-[#8B6BAD]">฿{current.transferred.toLocaleString()}</p>
             </div>
-            <p className="text-xl font-bold text-[#8B6BAD]">฿{current.transferred.toLocaleString()}</p>
           </div>
-        </div>
+        )}
       </div>
 
       {/* Recent Logs */}
@@ -125,6 +158,12 @@ export default function DashboardPage() {
         </div>
 
         <div className="space-y-2">
+          {loading && (
+            <p className="text-sm text-gray-400 text-center py-4">กำลังโหลด... / Loading...</p>
+          )}
+          {!loading && recentLogs.length === 0 && (
+            <p className="text-sm text-gray-400 text-center py-4">ยังไม่มีรายการ / No logs yet</p>
+          )}
           {recentLogs.map((log) => (
             <Link
               key={log.id}
@@ -134,11 +173,11 @@ export default function DashboardPage() {
               <div>
                 <p className="text-sm font-medium text-gray-700">{formatDate(log.date)}</p>
                 <p className="text-xs text-gray-600">
-                  สด (Cash) ฿{log.cash.toLocaleString()} · โอน (Transfer) ฿{log.transferred.toLocaleString()}
+                  สด (Cash) ฿{log.cash_amount.toLocaleString()} · โอน (Transfer) ฿{(log.total_amount - log.cash_amount).toLocaleString()}
                 </p>
               </div>
               <div className="text-right">
-                <p className="text-sm font-bold text-gray-800">฿{log.total.toLocaleString()}</p>
+                <p className="text-sm font-bold text-gray-800">฿{log.total_amount.toLocaleString()}</p>
                 <p className="text-[10px] text-gray-600">total</p>
               </div>
             </Link>

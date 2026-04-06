@@ -1,7 +1,9 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { saveLog } from "@/lib/db";
 
 // Mock OCR output — simulating what Tesseract would return from a handwritten Thai log
 const mockRawText = `วันที่ 6 เม.ย. 2569
@@ -21,11 +23,13 @@ const mockServices = [
 ];
 
 export default function ReviewPage() {
+  const router = useRouter();
   const [showRawText, setShowRawText] = useState(false);
   const [services, setServices] = useState(mockServices);
-  const [date, setDate] = useState("2026-04-06");
+  const [date, setDate] = useState(new Date().toISOString().split("T")[0]);
   const [totalAmount, setTotalAmount] = useState(1600);
   const [cashAmount, setCashAmount] = useState<number | "">("");
+  const [saving, setSaving] = useState(false);
 
   const transferred = totalAmount - (cashAmount === "" ? 0 : cashAmount);
 
@@ -42,6 +46,29 @@ export default function ReviewPage() {
 
   function removeService(id: number) {
     setServices((prev) => prev.filter((s) => s.id !== id));
+  }
+
+  async function handleSave() {
+    setSaving(true);
+    try {
+      await saveLog({
+        date,
+        raw_text: mockRawText,
+        extracted_numbers: mockExtractedNumbers,
+        services: services.map((s) => ({
+          id: String(s.id),
+          description: s.description,
+          amount: s.amount,
+        })),
+        total_amount: totalAmount,
+        cash_amount: cashAmount === "" ? 0 : cashAmount,
+      });
+      router.push("/");
+    } catch (e) {
+      alert("Error saving. Please try again.");
+    } finally {
+      setSaving(false);
+    }
   }
 
   return (
@@ -181,8 +208,12 @@ export default function ReviewPage() {
 
       {/* Save Button */}
       <div className="fixed bottom-6 left-0 right-0 px-4 max-w-md mx-auto">
-        <button className="w-full bg-[#9575B5] hover:bg-[#8B6BAD] active:bg-[#7A5C9C] text-white font-semibold rounded-2xl py-4 shadow-lg transition-colors">
-          บันทึก / Save
+        <button
+          onClick={handleSave}
+          disabled={saving}
+          className="w-full bg-[#9575B5] hover:bg-[#8B6BAD] active:bg-[#7A5C9C] text-white font-semibold rounded-2xl py-4 shadow-lg transition-colors disabled:opacity-50"
+        >
+          {saving ? "กำลังบันทึก... / Saving..." : "บันทึก / Save"}
         </button>
       </div>
     </div>
