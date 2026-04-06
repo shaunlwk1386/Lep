@@ -36,33 +36,53 @@ export const SERVICE_LIST: ServiceOption[] = [
   { th: "ทำเท้า + ล้าง + ทาสีแฟลช", en: "Full pedicure + flash colour" },
 ]
 
-// Find closest matching service from OCR text
+// Phrase keywords for matching — ordered from most specific to least
+const KEYWORDS: Array<{ pattern: RegExp; weight: number }> = [
+  // Highly specific — rarely confused
+  { pattern: /เพ้นท์/, weight: 20 },
+  { pattern: /ลูกเกด/, weight: 20 },
+  { pattern: /สติเกอร์/, weight: 20 },
+  { pattern: /อะไหล่/, weight: 20 },
+  { pattern: /pvc/i, weight: 20 },
+  { pattern: /แฟลช/, weight: 15 },
+  // Compound actions
+  { pattern: /ทำมือ/, weight: 15 },
+  { pattern: /ทำเท้า/, weight: 15 },
+  // Remove
+  { pattern: /ล้างสี/, weight: 12 },
+  { pattern: /ล้าง/, weight: 8 },
+  // Apply
+  { pattern: /ทาสี/, weight: 10 },
+  { pattern: /ทา/, weight: 4 },
+  // Location — critical discriminator
+  { pattern: /มือ/, weight: 10 },
+  { pattern: /เท้า/, weight: 10 },
+]
+
+// Find closest matching service from OCR text using phrase matching
 export function matchService(ocrText: string): ServiceOption | null {
   if (!ocrText) return null
-  const lower = ocrText.toLowerCase()
 
   let bestMatch: ServiceOption | null = null
   let bestScore = 0
 
   for (const service of SERVICE_LIST) {
-    const thLower = service.th.toLowerCase()
-    const enLower = service.en.toLowerCase()
-
-    // Count matching characters
+    const th = service.th
     let score = 0
-    for (const char of lower) {
-      if (thLower.includes(char) || enLower.includes(char)) score++
+
+    for (const kw of KEYWORDS) {
+      const inOcr = kw.pattern.test(ocrText)
+      const inService = kw.pattern.test(th)
+      if (inOcr && inService) score += kw.weight
+      // Penalty: OCR has keyword but service does not (wrong match)
+      if (inOcr && !inService) score -= kw.weight * 0.5
     }
 
-    // Bonus for key word matches
-    if (lower.includes('มือ') && thLower.includes('มือ')) score += 5
-    if (lower.includes('เท้า') && thLower.includes('เท้า')) score += 5
-    if (lower.includes('ล้าง') && thLower.includes('ล้าง')) score += 5
-    if (lower.includes('ทา') && thLower.includes('ทา')) score += 3
-    if (lower.includes('แฟลช') && thLower.includes('แฟลช')) score += 5
-    if (lower.includes('ลูกเกด') && thLower.includes('ลูกเกด')) score += 5
-    if (lower.includes('pvc') && thLower.includes('pvc')) score += 8
-    if (lower.includes('เพ้นท์') && thLower.includes('เพ้นท์')) score += 8
+    // Extra penalty for wrong location when location is clear
+    const ocrHasMue = /มือ/.test(ocrText)
+    const ocrHasTao = /เท้า/.test(ocrText)
+    if (ocrHasMue && /เท้า/.test(th) && !/มือ/.test(th)) score -= 15
+    if (ocrHasTao && /มือ/.test(th) && !/เท้า/.test(th)) score -= 15
 
     if (score > bestScore) {
       bestScore = score
@@ -70,5 +90,6 @@ export function matchService(ocrText: string): ServiceOption | null {
     }
   }
 
-  return bestScore > 3 ? bestMatch : null
+  // Require a meaningful minimum score
+  return bestScore >= 10 ? bestMatch : null
 }
