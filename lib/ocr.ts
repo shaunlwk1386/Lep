@@ -1,4 +1,4 @@
-import { createWorker } from 'tesseract.js'
+import { createWorker, PSM } from 'tesseract.js'
 import { matchService } from './services'
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -124,9 +124,9 @@ function applyThreshold(data: Uint8ClampedArray, threshold: number): void {
  *   Current kernel: [0,-1,0, -1,5,-1, 0,-1,0] (standard sharpen)
  *   Stronger option: [−1,−1,−1, −1,9,−1, −1,−1,−1]
  */
-function applySharpen(data: Uint8ClampedArray, w: number, h: number): Uint8ClampedArray {
+function applySharpen(data: Uint8ClampedArray, w: number, h: number): Uint8ClampedArray<ArrayBuffer> {
   const kernel = [0, -1, 0, -1, 5, -1, 0, -1, 0]
-  const out = new Uint8ClampedArray(data.length)
+  const out = new Uint8ClampedArray(data.length) as Uint8ClampedArray<ArrayBuffer>
   for (let y = 0; y < h; y++) {
     for (let x = 0; x < w; x++) {
       let sum = 0
@@ -151,8 +151,8 @@ function applySharpen(data: Uint8ClampedArray, w: number, h: number): Uint8Clamp
  * Returns a new Uint8ClampedArray — original is not mutated.
  * Tune: increase the loop range (-1/+1) to dilate by 2px, etc.
  */
-function dilateDark(data: Uint8ClampedArray, w: number, h: number): Uint8ClampedArray {
-  const out = new Uint8ClampedArray(data)
+function dilateDark(data: Uint8ClampedArray, w: number, h: number): Uint8ClampedArray<ArrayBuffer> {
+  const out = new Uint8ClampedArray(data) as Uint8ClampedArray<ArrayBuffer>
   for (let y = 1; y < h - 1; y++) {
     for (let x = 1; x < w - 1; x++) {
       let hasDark = false
@@ -327,19 +327,19 @@ function preprocessVariantE(file: File): Promise<Blob> {
 type TesseractConfig = {
   name: string
   lang: string
-  psm: string  // passed to tessedit_pageseg_mode
+  psm: PSM     // passed to tessedit_pageseg_mode
   oem: number  // passed to createWorker — 1 = LSTM only (recommended)
 }
 
-// PSM reference (from tesseract.js/src/constants/PSM.js):
-//   '4'  = SINGLE_COLUMN — one column of variable-size text
-//   '6'  = SINGLE_BLOCK  — uniform block of text (default, good for logs)
-//   '11' = SPARSE_TEXT   — sparse text, good for irregular layouts
+// PSM reference:
+//   SINGLE_COLUMN — one column of variable-size text
+//   SINGLE_BLOCK  — uniform block of text (default, good for logs)
+//   SPARSE_TEXT   — sparse text, good for irregular layouts
 // Tune: add or remove configs to change which combinations are tried.
 const TESSERACT_CONFIGS: TesseractConfig[] = [
-  { name: 'psm6-oem1',  lang: 'tha', psm: '6',  oem: 1 }, // structured block (best default)
-  { name: 'psm11-oem1', lang: 'tha', psm: '11', oem: 1 }, // sparse/irregular layout
-  { name: 'psm4-oem1',  lang: 'tha', psm: '4',  oem: 1 }, // single column notebook style
+  { name: 'psm6-oem1',  lang: 'tha', psm: PSM.SINGLE_BLOCK,  oem: 1 },
+  { name: 'psm11-oem1', lang: 'tha', psm: PSM.SPARSE_TEXT,   oem: 1 },
+  { name: 'psm4-oem1',  lang: 'tha', psm: PSM.SINGLE_COLUMN, oem: 1 },
 ]
 
 // ═══════════════════════════════════════════════════════════════════════════════
