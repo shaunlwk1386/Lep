@@ -111,6 +111,7 @@ export default function DashboardPage() {
       {/* Header */}
       <div className="mb-6">
         <div className="flex items-baseline gap-2">
+          <span className="text-2xl">🌻</span>
           <h1 className="text-2xl font-bold text-gray-900">เล็บ</h1>
           <span className="text-xs text-gray-600">Lep by egg v1.0</span>
         </div>
