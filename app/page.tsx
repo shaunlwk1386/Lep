@@ -46,8 +46,9 @@ function sumLogs(logs: DailyLog[]) {
       total: acc.total + log.total_amount,
       cash: acc.cash + log.cash_amount,
       transferred: acc.transferred + (log.total_amount - log.cash_amount),
+      commission: acc.commission + Math.round(log.total_amount * (log.commission_rate / 100)),
     }),
-    { total: 0, cash: 0, transferred: 0 }
+    { total: 0, cash: 0, transferred: 0, commission: 0 }
   );
 }
 
@@ -140,6 +141,14 @@ export default function DashboardPage() {
                 <p className="text-[10px] text-[#C5A8D9]">Transferred</p>
               </div>
               <p className="text-xl font-bold text-[#8B6BAD]">฿{current.transferred.toLocaleString()}</p>
+            </div>
+            <div className="h-px bg-gray-100" />
+            <div className="flex justify-between items-center">
+              <div>
+                <p className="text-xs font-medium text-gray-800">ได้รับรวม</p>
+                <p className="text-[10px] text-gray-500">Total commission</p>
+              </div>
+              <p className="text-xl font-bold text-gray-800">฿{current.commission.toLocaleString()}</p>
             </div>
           </div>
         )}
