@@ -40,15 +40,38 @@ function getDateRanges() {
   return { todayStr, weekStart, monthStart };
 }
 
+const BASIC_SALARY = 350
+
+function isOffDay(log: DailyLog): boolean {
+  return (log.services as { description: string }[]).some(
+    (s) => s.description.includes("วันหยุด")
+  );
+}
+
 function sumLogs(logs: DailyLog[]) {
   return logs.reduce(
-    (acc, log) => ({
-      total: acc.total + log.total_amount,
-      cash: acc.cash + log.cash_amount,
-      transferred: acc.transferred + (log.total_amount - log.cash_amount),
-      commission: acc.commission + Math.round(log.total_amount * (log.commission_rate / 100)),
-    }),
-    { total: 0, cash: 0, transferred: 0, commission: 0 }
+    (acc, log) => {
+      const offDay = isOffDay(log)
+      const dailyCommission = Math.round(log.total_amount * (log.commission_rate / 100))
+
+      if (offDay || dailyCommission < BASIC_SALARY) {
+        // Day pays basic salary — don't count revenue as cash/transfer
+        return {
+          ...acc,
+          basicSalary: acc.basicSalary + BASIC_SALARY,
+        }
+      }
+
+      // Commission day — count revenue and commission normally
+      return {
+        ...acc,
+        total: acc.total + log.total_amount,
+        cash: acc.cash + log.cash_amount,
+        transferred: acc.transferred + (log.total_amount - log.cash_amount),
+        commission: acc.commission + dailyCommission,
+      }
+    },
+    { total: 0, cash: 0, transferred: 0, commission: 0, basicSalary: 0 }
   );
 }
 
@@ -134,21 +157,28 @@ export default function DashboardPage() {
               </div>
               <p className="text-base font-medium text-gray-600">฿{current.cash.toLocaleString()}</p>
             </div>
-            <div className="h-px bg-gray-100" />
             <div className="flex justify-between items-center">
               <div>
-                <p className="text-xs font-medium text-[#8B6BAD]">ยอดโอน</p>
-                <p className="text-[10px] text-[#C5A8D9]">Transferred</p>
+                <p className="text-xs text-gray-600">ยอดโอน</p>
+                <p className="text-[10px] text-gray-500">Transferred</p>
               </div>
-              <p className="text-xl font-bold text-[#8B6BAD]">฿{current.transferred.toLocaleString()}</p>
+              <p className="text-base font-medium text-gray-600">฿{current.transferred.toLocaleString()}</p>
             </div>
             <div className="h-px bg-gray-100" />
             <div className="flex justify-between items-center">
               <div>
-                <p className="text-xs font-medium text-gray-800">ได้รับรวม</p>
-                <p className="text-[10px] text-gray-500">Total commission</p>
+                <p className="text-xs font-medium text-gray-600">เงินเดือนพื้นฐาน</p>
+                <p className="text-[10px] text-gray-400">Basic salary days</p>
               </div>
-              <p className="text-xl font-bold text-gray-800">฿{current.commission.toLocaleString()}</p>
+              <p className="text-base font-medium text-gray-600">฿{current.basicSalary.toLocaleString()}</p>
+            </div>
+            <div className="h-px bg-gray-100" />
+            <div className="flex justify-between items-center">
+              <div>
+                <p className="text-sm font-semibold text-[#8B6BAD]">ได้รับรวม</p>
+                <p className="text-[10px] text-[#C5A8D9]">Total pay</p>
+              </div>
+              <p className="text-2xl font-bold text-[#8B6BAD]">฿{(current.commission + current.basicSalary).toLocaleString()}</p>
             </div>
           </div>
         )}
