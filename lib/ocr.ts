@@ -281,6 +281,42 @@ function preprocessVariantD(file: File): Promise<Blob> {
   })
 }
 
+/**
+ * VARIANT E — Dot-removal for dotted/ruled notebook paper, then Otsu threshold.
+ *
+ * The problem: dotted ruled lines in Saly's notebook are light grey. Tesseract
+ * interprets each dot as a character and generates pages of garbage noise.
+ *
+ * The fix: push light-grey pixels (dots) to white BEFORE thresholding, so only
+ * darker ink (the actual handwriting) survives into the binarised image.
+ *
+ * How it works:
+ *   1. Grayscale conversion
+ *   2. "Dot kill" pass — any pixel brighter than DOT_THRESHOLD becomes white.
+ *      Blue ink on white paper converts to ~50-150 grey; dots are ~190-230 grey.
+ *      Setting DOT_THRESHOLD = 185 kills dots while keeping ink.
+ *      Tune: raise DOT_THRESHOLD if ink is being erased; lower if dots remain.
+ *   3. Otsu global threshold on the dot-removed image.
+ *
+ * This variant is placed FIRST in ATTEMPT_PLANS so it runs before others.
+ */
+const DOT_THRESHOLD = 185 // tune here — pixels above this are treated as dots/background
+function preprocessVariantE(file: File): Promise<Blob> {
+  return preprocessWithCanvas(file, (imageData) => {
+    const d = imageData.data
+    // Step 1: grayscale
+    toGrayscale(d)
+    // Step 2: kill dots — push light grey to white before thresholding
+    for (let i = 0; i < d.length; i += 4) {
+      if (d[i] > DOT_THRESHOLD) { d[i] = 255; d[i + 1] = 255; d[i + 2] = 255 }
+    }
+    // Step 3: Otsu threshold on the cleaned image
+    const t = computeOtsuThreshold(d)
+    applyThreshold(d, t)
+    return imageData
+  })
+}
+
 // ═══════════════════════════════════════════════════════════════════════════════
 // SECTION 5: TESSERACT CONFIG VARIANTS
 // PSM = Page Segmentation Mode, OEM = OCR Engine Mode.
@@ -362,19 +398,26 @@ function scoreOcrText(text: string): number {
 export function cleanOcrText(text: string): string {
   return text
     .split('\n')
-    .map(line => line.replace(/[ \t]+/g, ' ').trim()) // normalise whitespace per line
+    .map(line => line.replace(/[ \t]+/g, ' ').trim())
     .filter(line => {
       if (!line) return false
-      // Keep lines that have Thai OR numeric content — even partially.
-      // Only discard lines that are pure symbols/Latin with no useful content.
+      // Discard very short pure-symbol lines ("|", "---", "===")
+      if (line.length <= 2 && !/[\u0E00-\u0E7F\d]/.test(line)) return false
+
       const hasThai  = /[\u0E00-\u0E7F]/.test(line)
       const hasDigit = /\d/.test(line)
-      return hasThai || hasDigit
-    })
-    .filter(line => {
-      // Also discard very short pure-symbol lines (e.g. "---", "===", "|")
-      if (line.length <= 2 && !/[\u0E00-\u0E7F\d]/.test(line)) return false
-      return true
+
+      // Always keep lines with Thai characters
+      if (hasThai) return true
+
+      // Keep digit-only lines only if they contain a plausible price (50-2000)
+      // This prevents date numbers, noise numbers etc. from surviving
+      if (hasDigit) {
+        const nums = [...line.matchAll(/\d+/g)].map(m => Number(m[0]))
+        return nums.some(n => n >= 50 && n <= 2000)
+      }
+
+      return false
     })
     .join('\n')
 }
@@ -396,10 +439,10 @@ type AttemptPlan = {
 // Tune: reorder, add, or remove entries to change the attempt strategy.
 // Earlier entries run first. Attempts stop early if GOOD_ENOUGH_SCORE is hit.
 const ATTEMPT_PLANS: AttemptPlan[] = [
+  { variantName: 'E-dot-removal',  preprocessFn: preprocessVariantE, config: TESSERACT_CONFIGS[0] }, // dotted notebook — run first
   { variantName: 'A-original',     preprocessFn: preprocessVariantA, config: TESSERACT_CONFIGS[0] },
   { variantName: 'B-otsu',         preprocessFn: preprocessVariantB, config: TESSERACT_CONFIGS[0] },
   { variantName: 'C-sharpen-otsu', preprocessFn: preprocessVariantC, config: TESSERACT_CONFIGS[1] },
-  { variantName: 'D-dilate',       preprocessFn: preprocessVariantD, config: TESSERACT_CONFIGS[0] },
 ]
 
 async function runMultiAttemptOcr(file: File): Promise<{
