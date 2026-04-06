@@ -1,4 +1,4 @@
-import Tesseract, { createWorker } from 'tesseract.js'
+import { createWorker } from 'tesseract.js'
 import { matchService } from './services'
 
 // ═══════════════════════════════════════════════════════════════════════════════
