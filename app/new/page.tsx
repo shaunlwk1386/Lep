@@ -32,14 +32,14 @@ export default function NewLogPage() {
         <Link href="/" className="text-[#8B6BAD] text-sm">← กลับ / Back</Link>
       </div>
       <h1 className="text-xl font-bold text-gray-800 mb-1">บันทึกวันนี้ / New Log</h1>
-      <p className="text-xs text-gray-400 mb-6">อัปโหลดรูปและกรอกข้อมูล / Upload photos and fill in details</p>
+      <p className="text-xs text-gray-600 mb-6">อัปโหลดรูปและกรอกข้อมูล / Upload photos and fill in details</p>
 
       <div className="space-y-4">
 
         {/* Log Photo */}
         <div className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm">
           <p className="text-sm font-semibold text-gray-700 mb-1">รูปสมุดบันทึก / Log Photo</p>
-          <p className="text-xs text-gray-400 mb-3">ถ่ายรูปสมุดบันทึกประจำวัน / Photo of the handwritten daily log</p>
+          <p className="text-xs text-gray-600 mb-3">ถ่ายรูปสมุดบันทึกประจำวัน / Photo of the handwritten daily log</p>
 
           <input
             ref={logInputRef}
@@ -66,7 +66,7 @@ export default function NewLogPage() {
               className="w-full border-2 border-dashed border-gray-200 rounded-xl py-8 flex flex-col items-center gap-2 active:bg-gray-50"
             >
               <span className="text-3xl">📋</span>
-              <span className="text-sm text-gray-400">แตะเพื่ออัปโหลด / Tap to upload</span>
+              <span className="text-sm text-gray-600">แตะเพื่ออัปโหลด / Tap to upload</span>
             </button>
           )}
         </div>
@@ -74,7 +74,7 @@ export default function NewLogPage() {
         {/* Cash Photo + Amount */}
         <div className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm">
           <p className="text-sm font-semibold text-gray-700 mb-1">รูปเงินสด / Cash Photo</p>
-          <p className="text-xs text-gray-400 mb-3">ถ่ายรูปเงินที่รับมา / Photo of cash collected</p>
+          <p className="text-xs text-gray-600 mb-3">ถ่ายรูปเงินที่รับมา / Photo of cash collected</p>
 
           <input
             ref={cashInputRef}
@@ -101,7 +101,7 @@ export default function NewLogPage() {
               className="w-full border-2 border-dashed border-gray-200 rounded-xl py-8 flex flex-col items-center gap-2 active:bg-gray-50 mb-3"
             >
               <span className="text-3xl">💵</span>
-              <span className="text-sm text-gray-400">แตะเพื่ออัปโหลด / Tap to upload</span>
+              <span className="text-sm text-gray-600">แตะเพื่ออัปโหลด / Tap to upload</span>
             </button>
           )}
 
@@ -129,7 +129,7 @@ export default function NewLogPage() {
           className={`w-full font-semibold rounded-2xl py-4 shadow-lg transition-colors ${
             canProcess
               ? "bg-[#9575B5] hover:bg-[#8B6BAD] active:bg-[#7A5C9C] text-white"
-              : "bg-gray-100 text-gray-300 cursor-not-allowed"
+              : "bg-gray-100 text-gray-500 cursor-not-allowed"
           }`}
         >
           ประมวลผล / Process

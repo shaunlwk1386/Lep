@@ -34,14 +34,14 @@ export default function LogDetailPage() {
 
       <h1 className="text-xl font-bold text-gray-800 mb-1">สรุปประจำวัน / Day Summary</h1>
       <p className="text-sm text-gray-500">{th}</p>
-      <p className="text-xs text-gray-400 mb-6">{en}</p>
+      <p className="text-xs text-gray-600 mb-6">{en}</p>
 
       <div className="space-y-4">
 
         {/* Services */}
         <div className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm">
           <p className="text-sm font-semibold text-gray-700 mb-1">บริการ / Services</p>
-          <p className="text-xs text-gray-400 mb-3">รายการบริการวันนี้ / Today's services</p>
+          <p className="text-xs text-gray-600 mb-3">รายการบริการวันนี้ / Today's services</p>
           <div className="space-y-2">
             {log.services.map((s, i) => (
               <div key={i} className="flex justify-between items-center">
@@ -56,15 +56,15 @@ export default function LogDetailPage() {
         <div className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm space-y-3">
           <div className="flex justify-between items-center">
             <div>
-              <p className="text-xs text-gray-400">รวมทั้งหมด</p>
-              <p className="text-[10px] text-gray-300">Total earned</p>
+              <p className="text-xs text-gray-600">รวมทั้งหมด</p>
+              <p className="text-[10px] text-gray-500">Total earned</p>
             </div>
             <p className="text-lg font-bold text-gray-800">฿{log.total.toLocaleString()}</p>
           </div>
           <div className="flex justify-between items-center">
             <div>
-              <p className="text-xs text-gray-400">รับเป็นเงินสด</p>
-              <p className="text-[10px] text-gray-300">Cash received</p>
+              <p className="text-xs text-gray-600">รับเป็นเงินสด</p>
+              <p className="text-[10px] text-gray-500">Cash received</p>
             </div>
             <p className="text-base font-medium text-gray-600">฿{log.cash.toLocaleString()}</p>
           </div>

@@ -59,11 +59,11 @@ export default function DashboardPage() {
       <div className="mb-6">
         <div className="flex items-baseline gap-2">
           <h1 className="text-2xl font-bold text-gray-900">เล็บ</h1>
-          <span className="text-xs text-gray-400">Lep by egg v1.0</span>
+          <span className="text-xs text-gray-600">Lep by egg v1.0</span>
         </div>
         <p className="text-sm text-gray-500">ซาลี่ · Saly</p>
         <p className="text-sm text-gray-500">{todayTh}</p>
-        <p className="text-xs text-gray-400">{todayEn}</p>
+        <p className="text-xs text-gray-600">{todayEn}</p>
       </div>
 
       {/* Tabs */}
@@ -75,7 +75,7 @@ export default function DashboardPage() {
             className={`flex-1 rounded-lg py-2 text-xs font-medium transition-all ${
               activeTab === tab.key
                 ? "bg-white text-[#8B6BAD] shadow-sm"
-                : "text-gray-400"
+                : "text-gray-600"
             }`}
           >
             <span className="block">{tab.labelTh}</span>
@@ -89,15 +89,15 @@ export default function DashboardPage() {
         <div className="space-y-3">
           <div className="flex justify-between items-center">
             <div>
-              <p className="text-xs text-gray-400">รวมทั้งหมด</p>
-              <p className="text-[10px] text-gray-300">Total earned</p>
+              <p className="text-xs text-gray-600">รวมทั้งหมด</p>
+              <p className="text-[10px] text-gray-500">Total earned</p>
             </div>
             <p className="text-2xl font-bold text-gray-800">฿{current.total.toLocaleString()}</p>
           </div>
           <div className="flex justify-between items-center">
             <div>
-              <p className="text-xs text-gray-400">รับเป็นเงินสด</p>
-              <p className="text-[10px] text-gray-300">Cash received</p>
+              <p className="text-xs text-gray-600">รับเป็นเงินสด</p>
+              <p className="text-[10px] text-gray-500">Cash received</p>
             </div>
             <p className="text-base font-medium text-gray-600">฿{current.cash.toLocaleString()}</p>
           </div>
@@ -117,7 +117,7 @@ export default function DashboardPage() {
         <div className="flex justify-between items-center mb-3">
           <div>
             <p className="text-sm font-semibold text-gray-700">รายการล่าสุด</p>
-            <p className="text-xs text-gray-400">Recent logs</p>
+            <p className="text-xs text-gray-600">Recent logs</p>
           </div>
           <Link href="/history" className="text-xs text-[#8B6BAD] font-medium">
             ดูทั้งหมด / View all
@@ -133,13 +133,13 @@ export default function DashboardPage() {
             >
               <div>
                 <p className="text-sm font-medium text-gray-700">{formatDate(log.date)}</p>
-                <p className="text-xs text-gray-400">
+                <p className="text-xs text-gray-600">
                   สด (Cash) ฿{log.cash.toLocaleString()} · โอน (Transfer) ฿{log.transferred.toLocaleString()}
                 </p>
               </div>
               <div className="text-right">
                 <p className="text-sm font-bold text-gray-800">฿{log.total.toLocaleString()}</p>
-                <p className="text-[10px] text-gray-400">total</p>
+                <p className="text-[10px] text-gray-600">total</p>
               </div>
             </Link>
           ))}

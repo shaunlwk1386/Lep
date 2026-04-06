@@ -17,10 +17,10 @@ const mockLog = {
 export default function EditLogPage() {
   const [date, setDate] = useState(mockLog.date);
   const [services, setServices] = useState(mockLog.services);
-  const [cashAmount, setCashAmount] = useState(mockLog.cash);
+  const [cashAmount, setCashAmount] = useState<number | "">(mockLog.cash);
 
   const totalAmount = services.reduce((sum, s) => sum + s.amount, 0);
-  const transferred = totalAmount - cashAmount;
+  const transferred = totalAmount - (cashAmount === "" ? 0 : cashAmount);
 
   function updateService(id: string, field: "description" | "amount", value: string | number) {
     setServices((prev) =>
@@ -46,13 +46,13 @@ export default function EditLogPage() {
         <Link href="/history" className="text-[#8B6BAD] text-sm">← กลับ / Back</Link>
       </div>
       <h1 className="text-xl font-bold text-gray-800 mb-1">แก้ไขบันทึก / Edit Log</h1>
-      <p className="text-xs text-gray-400 mb-6">แก้ไขข้อมูลประจำวัน / Edit this day's record</p>
+      <p className="text-xs text-gray-600 mb-6">แก้ไขข้อมูลประจำวัน / Edit this day's record</p>
 
       <div className="space-y-4">
 
         {/* Date */}
         <div className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm">
-          <p className="text-xs text-gray-400 mb-1">วันที่ / Date</p>
+          <p className="text-xs text-gray-600 mb-1">วันที่ / Date</p>
           <input
             type="date"
             value={date}
@@ -66,7 +66,7 @@ export default function EditLogPage() {
           <div className="flex justify-between items-center mb-3">
             <div>
               <p className="text-sm font-semibold text-gray-700">บริการ / Services</p>
-              <p className="text-xs text-gray-400">แก้ไขหรือลบรายการ / Edit or remove entries</p>
+              <p className="text-xs text-gray-600">แก้ไขหรือลบรายการ / Edit or remove entries</p>
             </div>
             <button
               onClick={addService}
@@ -94,7 +94,7 @@ export default function EditLogPage() {
                 />
                 <button
                   onClick={() => removeService(s.id)}
-                  className="text-gray-300 hover:text-red-400 text-lg leading-none"
+                  className="text-gray-500 hover:text-red-400 text-lg leading-none"
                 >
                   ×
                 </button>
@@ -106,18 +106,19 @@ export default function EditLogPage() {
         {/* Totals */}
         <div className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm space-y-3">
           <div>
-            <p className="text-xs text-gray-400 mb-1">รับเป็นเงินสด / Cash received (฿)</p>
+            <p className="text-xs text-gray-600 mb-1">รับเป็นเงินสด / Cash received (฿)</p>
             <input
               type="number"
               value={cashAmount}
-              onChange={(e) => setCashAmount(Number(e.target.value))}
+              placeholder="0"
+              onChange={(e) => setCashAmount(e.target.value === "" ? "" : Number(e.target.value))}
               className="w-full border border-gray-200 rounded-xl px-4 py-2 text-base text-gray-600 focus:outline-none focus:border-[#9575B5]"
             />
           </div>
           <div className="h-px bg-gray-100" />
           <div className="flex justify-between items-center">
             <div>
-              <p className="text-xs text-gray-400">รวมทั้งหมด / Total</p>
+              <p className="text-xs text-gray-600">รวมทั้งหมด / Total</p>
             </div>
             <p className="text-base font-bold text-gray-800">฿{totalAmount.toLocaleString()}</p>
           </div>

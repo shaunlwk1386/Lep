@@ -259,7 +259,7 @@ export default function HistoryPage() {
         <Link href="/" className="text-[#8B6BAD] text-sm">← กลับ / Back</Link>
       </div>
       <h1 className="text-xl font-bold text-gray-800 mb-1">ประวัติทั้งหมด / All Logs</h1>
-      <p className="text-xs text-gray-400 mb-6">รายการบันทึกทั้งหมด / Complete log history</p>
+      <p className="text-xs text-gray-600 mb-6">รายการบันทึกทั้งหมด / Complete log history</p>
 
       {data.map((month) => (
         <div key={month.label} className="mb-6">
@@ -279,11 +279,11 @@ export default function HistoryPage() {
                   >
                     <div className="text-left">
                       <p className="text-sm font-semibold text-gray-700">{week.label}</p>
-                      <p className="text-xs text-gray-400 mt-0.5">
+                      <p className="text-xs text-gray-600 mt-0.5">
                         รวม / Total ฿{week.total.toLocaleString()} · โอน / Transfer ฿{week.transferred.toLocaleString()}
                       </p>
                     </div>
-                    <span className="text-gray-300 text-sm">{isWeekOpen ? "▲" : "▼"}</span>
+                    <span className="text-gray-500 text-sm">{isWeekOpen ? "▲" : "▼"}</span>
                   </button>
 
                   {isWeekOpen && (
@@ -291,11 +291,11 @@ export default function HistoryPage() {
                       {/* Week Summary Bar */}
                       <div className="flex justify-between px-4 py-2 bg-[#FAF6FF] border-t border-gray-100">
                         <div className="text-center flex-1">
-                          <p className="text-[10px] text-gray-400">รวม / Total</p>
+                          <p className="text-[10px] text-gray-600">รวม / Total</p>
                           <p className="text-sm font-bold text-gray-700">฿{week.total.toLocaleString()}</p>
                         </div>
                         <div className="text-center flex-1">
-                          <p className="text-[10px] text-gray-400">สด / Cash</p>
+                          <p className="text-[10px] text-gray-600">สด / Cash</p>
                           <p className="text-sm font-medium text-gray-600">฿{week.cash.toLocaleString()}</p>
                         </div>
                         <div className="text-center flex-1">
@@ -307,7 +307,7 @@ export default function HistoryPage() {
                       {/* Individual Logs */}
                       <div className="divide-y divide-gray-50">
                         {week.logs.length === 0 && (
-                          <p className="text-xs text-gray-300 text-center py-4">ไม่มีรายการ / No entries</p>
+                          <p className="text-xs text-gray-500 text-center py-4">ไม่มีรายการ / No entries</p>
                         )}
                         {week.logs.map((log) => {
                           const isLogOpen = expandedLogs[log.id];
@@ -319,13 +319,13 @@ export default function HistoryPage() {
                               >
                                 <div className="text-left">
                                   <p className="text-sm font-medium text-gray-700">{formatDate(log.date)}</p>
-                                  <p className="text-xs text-gray-400">
+                                  <p className="text-xs text-gray-600">
                                     สด (Cash) ฿{log.cash.toLocaleString()} · โอน (Transfer) ฿{log.transferred.toLocaleString()}
                                   </p>
                                 </div>
                                 <div className="flex items-center gap-3">
                                   <p className="text-sm font-bold text-gray-800">฿{log.total.toLocaleString()}</p>
-                                  <span className="text-gray-300 text-xs">{isLogOpen ? "▲" : "▼"}</span>
+                                  <span className="text-gray-500 text-xs">{isLogOpen ? "▲" : "▼"}</span>
                                 </div>
                               </button>
 

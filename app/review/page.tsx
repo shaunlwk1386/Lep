@@ -25,9 +25,9 @@ export default function ReviewPage() {
   const [services, setServices] = useState(mockServices);
   const [date, setDate] = useState("2026-04-06");
   const [totalAmount, setTotalAmount] = useState(1600);
-  const [cashAmount, setCashAmount] = useState(400);
+  const [cashAmount, setCashAmount] = useState<number | "">("");
 
-  const transferred = totalAmount - cashAmount;
+  const transferred = totalAmount - (cashAmount === "" ? 0 : cashAmount);
 
   function updateService(id: number, field: "description" | "amount", value: string | number) {
     setServices((prev) =>
@@ -51,7 +51,7 @@ export default function ReviewPage() {
         <Link href="/new" className="text-[#8B6BAD] text-sm">← กลับ / Back</Link>
       </div>
       <h1 className="text-xl font-bold text-gray-800 mb-1">ตรวจสอบข้อมูล / Review</h1>
-      <p className="text-xs text-gray-400 mb-6">แก้ไขข้อมูลก่อนบันทึก / Edit before saving</p>
+      <p className="text-xs text-gray-600 mb-6">แก้ไขข้อมูลก่อนบันทึก / Edit before saving</p>
 
       {/* Raw OCR Text (collapsible) */}
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm mb-4">
@@ -61,9 +61,9 @@ export default function ReviewPage() {
         >
           <div>
             <p className="text-sm font-semibold text-gray-700 text-left">ข้อความ OCR / Raw OCR Text</p>
-            <p className="text-xs text-gray-400 text-left">ข้อความที่อ่านได้จากรูป / Text extracted from image</p>
+            <p className="text-xs text-gray-600 text-left">ข้อความที่อ่านได้จากรูป / Text extracted from image</p>
           </div>
-          <span className="text-gray-400 text-sm">{showRawText ? "▲" : "▼"}</span>
+          <span className="text-gray-600 text-sm">{showRawText ? "▲" : "▼"}</span>
         </button>
         {showRawText && (
           <div className="px-4 pb-4">
@@ -76,7 +76,7 @@ export default function ReviewPage() {
 
       {/* Extracted Numbers */}
       <div className="mb-4">
-        <p className="text-xs text-gray-400 mb-2">ตัวเลขที่พบ / Detected numbers — แตะเพื่อใช้ / tap to use</p>
+        <p className="text-xs text-gray-600 mb-2">ตัวเลขที่พบ / Detected numbers — แตะเพื่อใช้ / tap to use</p>
         <div className="flex flex-wrap gap-2">
           {mockExtractedNumbers.map((num, i) => (
             <button
@@ -95,7 +95,7 @@ export default function ReviewPage() {
 
         {/* Date */}
         <div className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm">
-          <p className="text-xs text-gray-400 mb-1">วันที่ / Date</p>
+          <p className="text-xs text-gray-600 mb-1">วันที่ / Date</p>
           <input
             type="date"
             value={date}
@@ -109,7 +109,7 @@ export default function ReviewPage() {
           <div className="flex justify-between items-center mb-3">
             <div>
               <p className="text-sm font-semibold text-gray-700">บริการ / Services</p>
-              <p className="text-xs text-gray-400">รายการบริการวันนี้ / Today's services</p>
+              <p className="text-xs text-gray-600">รายการบริการวันนี้ / Today's services</p>
             </div>
             <button
               onClick={addService}
@@ -137,7 +137,7 @@ export default function ReviewPage() {
                 />
                 <button
                   onClick={() => removeService(service.id)}
-                  className="text-gray-300 hover:text-red-400 text-lg leading-none"
+                  className="text-gray-500 hover:text-red-400 text-lg leading-none"
                 >
                   ×
                 </button>
@@ -149,7 +149,7 @@ export default function ReviewPage() {
         {/* Totals */}
         <div className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm space-y-3">
           <div>
-            <p className="text-xs text-gray-400 mb-1">รวมทั้งหมด / Total amount (฿)</p>
+            <p className="text-xs text-gray-600 mb-1">รวมทั้งหมด / Total amount (฿)</p>
             <input
               type="number"
               value={totalAmount}
@@ -158,11 +158,12 @@ export default function ReviewPage() {
             />
           </div>
           <div>
-            <p className="text-xs text-gray-400 mb-1">รับเป็นเงินสด / Cash received (฿)</p>
+            <p className="text-xs text-gray-600 mb-1">รับเป็นเงินสด / Cash received (฿)</p>
             <input
               type="number"
               value={cashAmount}
-              onChange={(e) => setCashAmount(Number(e.target.value))}
+              placeholder="0"
+              onChange={(e) => setCashAmount(e.target.value === "" ? "" : Number(e.target.value))}
               className="w-full border border-gray-200 rounded-xl px-4 py-2 text-base text-gray-600 focus:outline-none focus:border-[#9575B5]"
             />
           </div>
@@ -170,7 +171,7 @@ export default function ReviewPage() {
           <div className="flex justify-between items-center">
             <div>
               <p className="text-sm font-medium text-[#8B6BAD]">ยอดโอน / Transferred</p>
-              <p className="text-xs text-gray-400">รวม - สด / Total minus cash</p>
+              <p className="text-xs text-gray-600">รวม - สด / Total minus cash</p>
             </div>
             <p className="text-xl font-bold text-[#8B6BAD]">฿{transferred.toLocaleString()}</p>
           </div>
