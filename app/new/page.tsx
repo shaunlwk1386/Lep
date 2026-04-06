@@ -3,11 +3,16 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useRef } from "react";
+import { runOcr } from "@/lib/ocr";
 
 export default function NewLogPage() {
-  const [logImage, setLogImage] = useState<string | null>(null);
-  const [cashImage, setCashImage] = useState<string | null>(null);
+  const [logImage, setLogImage] = useState<File | null>(null);
+  const [logPreview, setLogPreview] = useState<string | null>(null);
+  const [cashImage, setCashImage] = useState<File | null>(null);
+  const [cashPreview, setCashPreview] = useState<string | null>(null);
   const [cashAmount, setCashAmount] = useState("");
+  const [processing, setProcessing] = useState(false);
+  const [progress, setProgress] = useState("");
 
   const router = useRouter();
   const logInputRef = useRef<HTMLInputElement>(null);
@@ -15,12 +20,50 @@ export default function NewLogPage() {
 
   function handleLogImage(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
-    if (file) setLogImage(URL.createObjectURL(file));
+    if (file) {
+      setLogImage(file);
+      setLogPreview(URL.createObjectURL(file));
+    }
   }
 
   function handleCashImage(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
-    if (file) setCashImage(URL.createObjectURL(file));
+    if (file) {
+      setCashImage(file);
+      setCashPreview(URL.createObjectURL(file));
+    }
+  }
+
+  async function handleProcess() {
+    if (!logImage || !cashImage || !cashAmount) return;
+    setProcessing(true);
+
+    try {
+      // Step 1: Run OCR on log photo
+      setProgress("กำลังอ่านข้อความ... / Reading text...");
+      const ocrResult = await runOcr(logImage);
+
+      // Step 2: Store data for review page
+      sessionStorage.setItem("ocr_result", JSON.stringify(ocrResult));
+      sessionStorage.setItem("cash_amount", cashAmount);
+      sessionStorage.setItem("log_image_name", logImage.name);
+      sessionStorage.setItem("cash_image_name", cashImage.name);
+
+      // Store actual files for upload later
+      const logBuffer = await logImage.arrayBuffer();
+      const cashBuffer = await cashImage.arrayBuffer();
+      sessionStorage.setItem("log_image_type", logImage.type);
+      sessionStorage.setItem("cash_image_type", cashImage.type);
+
+      // We can't store files in sessionStorage directly, use object URLs
+      sessionStorage.setItem("log_image_url", logPreview!);
+      sessionStorage.setItem("cash_image_url", cashPreview!);
+
+      router.push("/review");
+    } catch (e) {
+      alert("OCR failed: " + (e instanceof Error ? e.message : String(e)));
+      setProcessing(false);
+    }
   }
 
   const canProcess = logImage && cashImage && cashAmount;
@@ -41,19 +84,13 @@ export default function NewLogPage() {
           <p className="text-sm font-semibold text-gray-700 mb-1">รูปสมุดบันทึก / Log Photo</p>
           <p className="text-xs text-gray-600 mb-3">ถ่ายรูปสมุดบันทึกประจำวัน / Photo of the handwritten daily log</p>
 
-          <input
-            ref={logInputRef}
-            type="file"
-            accept="image/*"
-            onChange={handleLogImage}
-            className="hidden"
-          />
+          <input ref={logInputRef} type="file" accept="image/*" onChange={handleLogImage} className="hidden" />
 
-          {logImage ? (
+          {logPreview ? (
             <div className="relative">
-              <img src={logImage} alt="Log" className="w-full rounded-xl object-cover max-h-48" />
+              <img src={logPreview} alt="Log" className="w-full rounded-xl object-cover max-h-48" />
               <button
-                onClick={() => { setLogImage(null); if (logInputRef.current) logInputRef.current.value = ""; }}
+                onClick={() => { setLogImage(null); setLogPreview(null); if (logInputRef.current) logInputRef.current.value = ""; }}
                 className="absolute top-2 right-2 bg-white rounded-full px-2 py-1 text-xs text-gray-500 shadow"
               >
                 เปลี่ยน / Change
@@ -75,19 +112,13 @@ export default function NewLogPage() {
           <p className="text-sm font-semibold text-gray-700 mb-1">รูปเงินสด / Cash Photo</p>
           <p className="text-xs text-gray-600 mb-3">ถ่ายรูปเงินที่รับมา / Photo of cash collected</p>
 
-          <input
-            ref={cashInputRef}
-            type="file"
-            accept="image/*"
-            onChange={handleCashImage}
-            className="hidden"
-          />
+          <input ref={cashInputRef} type="file" accept="image/*" onChange={handleCashImage} className="hidden" />
 
-          {cashImage ? (
+          {cashPreview ? (
             <div className="relative mb-3">
-              <img src={cashImage} alt="Cash" className="w-full rounded-xl object-cover max-h-48" />
+              <img src={cashPreview} alt="Cash" className="w-full rounded-xl object-cover max-h-48" />
               <button
-                onClick={() => { setCashImage(null); if (cashInputRef.current) cashInputRef.current.value = ""; }}
+                onClick={() => { setCashImage(null); setCashPreview(null); if (cashInputRef.current) cashInputRef.current.value = ""; }}
                 className="absolute top-2 right-2 bg-white rounded-full px-2 py-1 text-xs text-gray-500 shadow"
               >
                 เปลี่ยน / Change
@@ -103,9 +134,8 @@ export default function NewLogPage() {
             </button>
           )}
 
-          {/* Cash Amount */}
           <div>
-            <p className="text-xs text-gray-500 mb-1">จำนวนเงินสด / Cash amount (฿)</p>
+            <p className="text-xs text-gray-600 mb-1">จำนวนเงินสด / Cash amount (฿)</p>
             <input
               type="number"
               inputMode="numeric"
@@ -122,15 +152,15 @@ export default function NewLogPage() {
       {/* Process Button */}
       <div className="fixed bottom-6 left-0 right-0 px-4 max-w-md mx-auto">
         <button
-          disabled={!canProcess}
-          onClick={() => canProcess && router.push("/review")}
+          disabled={!canProcess || processing}
+          onClick={handleProcess}
           className={`w-full font-semibold rounded-2xl py-4 shadow-lg transition-colors ${
-            canProcess
+            canProcess && !processing
               ? "bg-[#9575B5] hover:bg-[#8B6BAD] active:bg-[#7A5C9C] text-white"
               : "bg-gray-100 text-gray-500 cursor-not-allowed"
           }`}
         >
-          ประมวลผล / Process
+          {processing ? progress || "กำลังประมวลผล... / Processing..." : "ประมวลผล / Process"}
         </button>
       </div>
     </div>

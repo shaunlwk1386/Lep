@@ -53,6 +53,29 @@ export default function LogDetailPage() {
       <p className="text-xs text-gray-600 mb-6">{en}</p>
 
       <div className="space-y-4">
+
+        {/* Images */}
+        {(log.image_log_url || log.image_cash_url) && (
+          <div className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm">
+            <p className="text-sm font-semibold text-gray-700 mb-1">รูปภาพ / Photos</p>
+            <p className="text-xs text-gray-600 mb-3">รูปสมุดบันทึกและเงินสด / Log and cash photos</p>
+            <div className="flex gap-2">
+              {log.image_log_url && (
+                <a href={log.image_log_url} target="_blank" rel="noopener noreferrer" className="flex-1">
+                  <img src={log.image_log_url} alt="Log" className="w-full rounded-xl object-cover h-32" />
+                  <p className="text-[10px] text-gray-500 text-center mt-1">สมุดบันทึก / Log</p>
+                </a>
+              )}
+              {log.image_cash_url && (
+                <a href={log.image_cash_url} target="_blank" rel="noopener noreferrer" className="flex-1">
+                  <img src={log.image_cash_url} alt="Cash" className="w-full rounded-xl object-cover h-32" />
+                  <p className="text-[10px] text-gray-500 text-center mt-1">เงินสด / Cash</p>
+                </a>
+              )}
+            </div>
+          </div>
+        )}
+
         <div className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm">
           <p className="text-sm font-semibold text-gray-700 mb-1">บริการ / Services</p>
           <p className="text-xs text-gray-600 mb-3">รายการบริการวันนี้ / Today's services</p>
