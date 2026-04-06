@@ -317,6 +317,49 @@ function preprocessVariantE(file: File): Promise<Blob> {
   })
 }
 
+/**
+ * VARIANT F — Blue ink isolation (best for Saly's blue pen on white ruled paper).
+ *
+ * The problem: page bleed-through from previous entries + dotted ruled lines
+ * generate huge amounts of noise. Both appear as grey/black in greyscale,
+ * indistinguishable from ink after thresholding.
+ *
+ * The fix: Saly writes in blue ink. Blue pixels have a noticeably higher B
+ * channel relative to R compared to grey (bleed-through, dots, shadows).
+ * By isolating blue-ish pixels BEFORE greyscale conversion, we keep only
+ * the actual handwriting and discard everything else.
+ *
+ * How it works:
+ *   1. For each pixel, check if it looks "blue-ish":
+ *      - B channel must exceed R by at least BLUE_ADVANTAGE (ink is bluer than grey)
+ *      - Overall brightness must be below BLUE_MAX_BRIGHTNESS (not white paper)
+ *   2. Non-blue pixels → forced to white (paper)
+ *   3. Blue pixels → forced to black (ink)
+ *   This produces a clean binary image with only the blue handwriting.
+ *
+ * Tune:
+ *   BLUE_ADVANTAGE — how much bluer than red a pixel must be to count as ink.
+ *     Lower = more permissive (catches faint blue), higher = stricter.
+ *     Current: 15. Try 10 if ink is being lost, 25 if bleed-through survives.
+ *   BLUE_MAX_BRIGHTNESS — pixels brighter than this are treated as white paper.
+ *     Current: 200. Lower if light grey dots are surviving.
+ */
+const BLUE_ADVANTAGE = 15
+const BLUE_MAX_BRIGHTNESS = 200
+function preprocessVariantF(file: File): Promise<Blob> {
+  return preprocessWithCanvas(file, (imageData) => {
+    const d = imageData.data
+    for (let i = 0; i < d.length; i += 4) {
+      const r = d[i], g = d[i + 1], b = d[i + 2]
+      const brightness = (r + g + b) / 3
+      const isBlueInk = b > r + BLUE_ADVANTAGE && brightness < BLUE_MAX_BRIGHTNESS
+      const v = isBlueInk ? 0 : 255
+      d[i] = v; d[i + 1] = v; d[i + 2] = v
+    }
+    return imageData
+  })
+}
+
 // ═══════════════════════════════════════════════════════════════════════════════
 // SECTION 5: TESSERACT CONFIG VARIANTS
 // PSM = Page Segmentation Mode, OEM = OCR Engine Mode.
@@ -439,10 +482,9 @@ type AttemptPlan = {
 // Tune: reorder, add, or remove entries to change the attempt strategy.
 // Earlier entries run first. Attempts stop early if GOOD_ENOUGH_SCORE is hit.
 const ATTEMPT_PLANS: AttemptPlan[] = [
-  { variantName: 'E-dot-removal',  preprocessFn: preprocessVariantE, config: TESSERACT_CONFIGS[0] }, // dotted notebook — run first
-  { variantName: 'A-original',     preprocessFn: preprocessVariantA, config: TESSERACT_CONFIGS[0] },
-  { variantName: 'B-otsu',         preprocessFn: preprocessVariantB, config: TESSERACT_CONFIGS[0] },
-  { variantName: 'C-sharpen-otsu', preprocessFn: preprocessVariantC, config: TESSERACT_CONFIGS[1] },
+  { variantName: 'F-blue-ink',     preprocessFn: preprocessVariantF, config: TESSERACT_CONFIGS[0] }, // blue pen isolation — best for Saly's notebook
+  { variantName: 'E-dot-removal',  preprocessFn: preprocessVariantE, config: TESSERACT_CONFIGS[0] }, // dot removal fallback
+  { variantName: 'A-original',     preprocessFn: preprocessVariantA, config: TESSERACT_CONFIGS[0] }, // original v2 fallback
 ]
 
 async function runMultiAttemptOcr(file: File): Promise<{
