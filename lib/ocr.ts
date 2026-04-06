@@ -795,7 +795,11 @@ async function runClaudeVisionOcr(imageFile: File): Promise<DetectedService[] | 
     const json = await res.json()
     console.log('[Claude Vision] response:', JSON.stringify(json))
     if (!Array.isArray(json.services)) return null
-    return json.services as DetectedService[]
+    // Try to snap Claude's description to a known service via matchService
+    return (json.services as DetectedService[]).map(s => ({
+      ...s,
+      description: matchService(s.description)?.th ?? s.description,
+    }))
   } catch (e) {
     console.error('[Claude Vision] fetch error:', e)
     return null

@@ -52,7 +52,7 @@ function ServiceRow({
           onFocus={() => setShowDropdown(true)}
           onBlur={() => setTimeout(() => setShowDropdown(false), 150)}
           placeholder="ค้นหาบริการ / Search service"
-          className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-[#9575B5] bg-white"
+          className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm text-gray-900 focus:outline-none focus:border-[#9575B5] bg-white"
         />
         {showDropdown && filtered.length > 0 && (
           <div className="absolute z-10 w-full bg-white border border-gray-200 rounded-xl shadow-lg max-h-48 overflow-y-auto mt-1">
@@ -78,7 +78,7 @@ function ServiceRow({
           value={service.amount || ""}
           placeholder="฿"
           onChange={(e) => onChange(service.id, "amount", Number(e.target.value))}
-          className="flex-1 border border-gray-200 rounded-xl px-3 py-2 text-sm text-right focus:outline-none focus:border-[#9575B5] bg-white"
+          className="flex-1 border border-gray-200 rounded-xl px-3 py-2 text-sm text-right text-gray-900 focus:outline-none focus:border-[#9575B5] bg-white"
         />
         <div className="flex rounded-xl overflow-hidden border border-gray-200 text-xs font-medium">
           <button

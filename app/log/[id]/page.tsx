@@ -70,16 +70,32 @@ export default function LogDetailPage() {
             <p className="text-xs text-gray-600 mb-3">รูปสมุดบันทึกและเงินสด / Log and cash photos</p>
             <div className="flex gap-2">
               {log.image_log_url && (
-                <a href={log.image_log_url} target="_blank" rel="noopener noreferrer" className="flex-1">
-                  <img src={log.image_log_url} alt="Log" className="w-full rounded-xl object-cover h-32" />
-                  <p className="text-[10px] text-gray-500 text-center mt-1">สมุดบันทึก / Log</p>
-                </a>
+                <div className="flex-1">
+                  <a href={log.image_log_url} target="_blank" rel="noopener noreferrer">
+                    <img src={log.image_log_url} alt="Log" className="w-full rounded-xl object-cover h-32" />
+                  </a>
+                  <a
+                    href={log.image_log_url}
+                    download
+                    className="block text-center text-[10px] text-[#8B6BAD] mt-1 underline"
+                  >
+                    สมุดบันทึก / Download
+                  </a>
+                </div>
               )}
               {log.image_cash_url && (
-                <a href={log.image_cash_url} target="_blank" rel="noopener noreferrer" className="flex-1">
-                  <img src={log.image_cash_url} alt="Cash" className="w-full rounded-xl object-cover h-32" />
-                  <p className="text-[10px] text-gray-500 text-center mt-1">เงินสด / Cash</p>
-                </a>
+                <div className="flex-1">
+                  <a href={log.image_cash_url} target="_blank" rel="noopener noreferrer">
+                    <img src={log.image_cash_url} alt="Cash" className="w-full rounded-xl object-cover h-32" />
+                  </a>
+                  <a
+                    href={log.image_cash_url}
+                    download
+                    className="block text-center text-[10px] text-[#8B6BAD] mt-1 underline"
+                  >
+                    เงินสด / Download
+                  </a>
+                </div>
               )}
             </div>
           </div>

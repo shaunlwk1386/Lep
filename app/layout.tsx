@@ -25,7 +25,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="th" className={`${sarabun.variable} h-full antialiased`}>
+    <html lang="th" className={`${sarabun.variable} h-full antialiased`} style={{ colorScheme: 'light' }}>
       <body className={`min-h-full flex flex-col bg-gray-50 ${sarabun.className}`}>{children}</body>
     </html>
   );
