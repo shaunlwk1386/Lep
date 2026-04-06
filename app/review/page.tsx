@@ -119,13 +119,17 @@ export default function ReviewPage() {
     const ocrRaw = sessionStorage.getItem("ocr_result");
     const logUrl = sessionStorage.getItem("log_image_url");
     const cashUrl = sessionStorage.getItem("cash_image_url");
+    const offDay = sessionStorage.getItem("off_day");
 
-    if (ocrRaw) {
+    if (offDay === "true") {
+      // Off-day: pre-fill with fixed 350b entry, 100% commission rate
+      setServices([{ id: Date.now(), description: "วันหยุด / Off Day", amount: 350, payment: "transfer" }]);
+      setCommissionRate(100);
+    } else if (ocrRaw) {
       const ocr = JSON.parse(ocrRaw);
       setRawText(ocr.rawText ?? "");
       setExtractedNumbers(ocr.numbers ?? []);
 
-      // Pre-fill services from detected lines
       if (ocr.detectedServices && ocr.detectedServices.length > 0) {
         setServices(
           ocr.detectedServices.map((s: { description: string; amount: number; payment: 'cash' | 'transfer' }, i: number) => ({
@@ -200,7 +204,7 @@ export default function ReviewPage() {
         image_cash_url: cashUrl ?? undefined,
       });
 
-      sessionStorage.clear();
+      sessionStorage.clear(); // clears off_day, ocr_result, image urls, etc.
       router.push("/");
     } catch (e) {
       alert("Error: " + (e instanceof Error ? e.message : String(e)));

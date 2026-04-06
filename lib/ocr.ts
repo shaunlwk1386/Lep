@@ -554,6 +554,60 @@ function extractAmount(line: string): { amount: number; idx: number } | null {
   return { amount: last.val, idx: last.idx }
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// DASH-FORMAT PARSER
+// Handles the structured format Saly is being asked to write:
+//   ชื่อบริการ - ราคา - สด/โอน
+//
+// Detection: a line is treated as dash-format if it contains 2+ dashes AND
+// one of the segments contains a valid price number.
+//
+// Each segment is trimmed and parsed independently:
+//   Segment 0 → service name (matched against service list, blank if no match)
+//   Segment 1 → price (first valid number 50-2000)
+//   Segment 2 → payment (สด = cash, โอน = transfer, default transfer)
+//
+// OCR often reads dashes as other characters (–, —, /, |, \).
+// DASH_PATTERN covers all common OCR substitutions for a dash separator.
+// Tune: add more characters to DASH_PATTERN if Saly's dashes get misread.
+// ─────────────────────────────────────────────────────────────────────────────
+const DASH_PATTERN = /\s*[-–—\/|\\]\s*/  // covers -, –, —, /, |, \
+
+function isDashFormat(line: string): boolean {
+  const parts = line.split(DASH_PATTERN)
+  if (parts.length < 2) return false
+  // At least one segment must contain a number in price range
+  return parts.some(p => {
+    const n = Number(p.trim().match(/\d+/)?.[0])
+    return n >= 50 && n <= 2000
+  })
+}
+
+function parseDashLine(line: string): DetectedService | null {
+  const parts = line.split(DASH_PATTERN).map(p => p.trim())
+
+  // Find which segment holds the price
+  let amount = 0
+  let priceIdx = -1
+  for (let i = 0; i < parts.length; i++) {
+    const n = Number(parts[i].match(/\d+/)?.[0])
+    if (n >= 50 && n <= 2000) { amount = n; priceIdx = i; break }
+  }
+  if (!amount) return null
+
+  // Service name = segment before the price
+  const serviceText = priceIdx > 0 ? parts[priceIdx - 1] : ''
+  const matched = matchService(serviceText)
+  const description = matched ? matched.th : ''
+
+  // Payment = segment after the price, or fall back to scanning all segments
+  const paymentText = parts.slice(priceIdx + 1).join(' ')
+  let payment: 'cash' | 'transfer' = 'transfer'
+  if (/สด|เงินสด|cash/i.test(paymentText) || /สด|เงินสด|cash/i.test(line)) payment = 'cash'
+
+  return { description, amount, payment }
+}
+
 function parseLines(rawText: string): DetectedService[] {
   const lines = rawText.split('\n').map(l => l.trim()).filter(Boolean)
   const results: DetectedService[] = []
@@ -565,25 +619,29 @@ function parseLines(rawText: string): DetectedService[] {
     // GATE 2: Must have Thai characters — prevents dates, headers, and noise rows
     if (!/[\u0E00-\u0E7F]/.test(line)) continue
 
+    // ── Path A: structured dash format (ชื่อ - ราคา - สด/โอน) ─────────────
+    // Try this first — it is more precise than the freeform parser below.
+    if (isDashFormat(line)) {
+      const result = parseDashLine(line)
+      if (result) { results.push(result); continue }
+    }
+
+    // ── Path B: freeform fallback — existing row-first logic ─────────────────
     // GATE 3: Must have a valid price number — the numeric row-detection signal
     const amountResult = extractAmount(line)
     if (!amountResult) continue
 
-    // ── Row confirmed ── extract remaining fields independently ──────────────
-
-    // Field 1: cash/transfer (independent of service name and amount validity)
+    // Field 1: cash/transfer
     const payment = extractPayment(line)
 
-    // Field 2: amount (already extracted above)
+    // Field 2: amount
     const { amount, idx: numIdx } = amountResult
 
-    // Field 3: service name — best effort, blank if not confident.
-    // Use text before the price number; fall back to full line if too short.
+    // Field 3: service name — best effort, blank if not confident
     const lineNoBracket = line.replace(/\([^)]*\)?$/g, ' ')
     const serviceText = lineNoBracket.slice(0, numIdx).trim()
     const textForMatching = serviceText.length >= 2 ? serviceText : line
     const matched = matchService(textForMatching)
-    // Only populate if matchService found a confident match — blank otherwise.
     const description = matched ? matched.th : ''
 
     results.push({ description, amount, payment })

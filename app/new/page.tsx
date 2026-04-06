@@ -11,6 +11,7 @@ export default function NewLogPage() {
   const [cashImage, setCashImage] = useState<File | null>(null);
   const [cashPreview, setCashPreview] = useState<string | null>(null);
   const [cashAmount, setCashAmount] = useState("");
+  const [isOffDay, setIsOffDay] = useState(false);
   const [processing, setProcessing] = useState(false);
   const [progress, setProgress] = useState("");
 
@@ -35,29 +36,25 @@ export default function NewLogPage() {
   }
 
   async function handleProcess() {
-    if (!logImage || !cashImage || !cashAmount) return;
+    if (!isOffDay && !logImage) return;
     setProcessing(true);
 
     try {
-      // Step 1: Run OCR on log photo
-      setProgress("กำลังอ่านข้อความ... / Reading text...");
-      const ocrResult = await runOcr(logImage);
+      if (isOffDay) {
+        // Off-day: skip OCR, pre-fill review with fixed 350b commission
+        sessionStorage.setItem("off_day", "true");
+        router.push("/review");
+        return;
+      }
 
-      // Step 2: Store data for review page
+      // Normal day: run OCR on log photo
+      setProgress("กำลังอ่านข้อความ... / Reading text...");
+      const ocrResult = await runOcr(logImage!);
+
       sessionStorage.setItem("ocr_result", JSON.stringify(ocrResult));
       sessionStorage.setItem("cash_amount", cashAmount);
-      sessionStorage.setItem("log_image_name", logImage.name);
-      sessionStorage.setItem("cash_image_name", cashImage.name);
-
-      // Store actual files for upload later
-      const logBuffer = await logImage.arrayBuffer();
-      const cashBuffer = await cashImage.arrayBuffer();
-      sessionStorage.setItem("log_image_type", logImage.type);
-      sessionStorage.setItem("cash_image_type", cashImage.type);
-
-      // We can't store files in sessionStorage directly, use object URLs
       sessionStorage.setItem("log_image_url", logPreview!);
-      sessionStorage.setItem("cash_image_url", cashPreview!);
+      if (cashPreview) sessionStorage.setItem("cash_image_url", cashPreview);
 
       router.push("/review");
     } catch (e) {
@@ -66,7 +63,7 @@ export default function NewLogPage() {
     }
   }
 
-  const canProcess = logImage && cashImage && cashAmount;
+  const canProcess = isOffDay || !!logImage;
 
   return (
     <div className="w-full max-w-md mx-auto px-5 pt-8 pb-24 min-h-screen">
@@ -79,8 +76,26 @@ export default function NewLogPage() {
 
       <div className="space-y-4">
 
-        {/* Log Photo */}
-        <div className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm">
+        {/* Off Day Toggle */}
+        <button
+          onClick={() => setIsOffDay(!isOffDay)}
+          className={`w-full flex items-center justify-between px-4 py-3 rounded-2xl border transition-colors ${
+            isOffDay
+              ? "bg-[#F0E8F7] border-[#C5A8D9] text-[#8B6BAD]"
+              : "bg-white border-gray-100 text-gray-600"
+          } shadow-sm`}
+        >
+          <div className="text-left">
+            <p className="text-sm font-semibold">วันหยุด / Off Day</p>
+            <p className="text-xs opacity-70">คอมมิชชั่น ฿350 / Commission ฿350</p>
+          </div>
+          <div className={`w-11 h-6 rounded-full transition-colors flex items-center px-1 ${isOffDay ? "bg-[#9575B5]" : "bg-gray-200"}`}>
+            <div className={`w-4 h-4 rounded-full bg-white shadow transition-transform ${isOffDay ? "translate-x-5" : "translate-x-0"}`} />
+          </div>
+        </button>
+
+        {/* Log Photo — hidden on off days */}
+        {!isOffDay && <div className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm">
           <p className="text-sm font-semibold text-gray-700 mb-1">รูปสมุดบันทึก / Log Photo</p>
           <p className="text-xs text-gray-600 mb-3">ถ่ายรูปสมุดบันทึกประจำวัน / Photo of the handwritten daily log</p>
 
@@ -105,11 +120,11 @@ export default function NewLogPage() {
               <span className="text-sm text-gray-600">แตะเพื่ออัปโหลด / Tap to upload</span>
             </button>
           )}
-        </div>
+        </div>}
 
-        {/* Cash Photo + Amount */}
-        <div className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm">
-          <p className="text-sm font-semibold text-gray-700 mb-1">รูปเงินสด / Cash Photo</p>
+        {/* Cash Photo + Amount — hidden on off days */}
+        {!isOffDay && <div className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm">
+          <p className="text-sm font-semibold text-gray-700 mb-1">รูปเงินสด / Cash Photo <span className="text-xs font-normal text-gray-400">(ถ้ามี / optional)</span></p>
           <p className="text-xs text-gray-600 mb-3">ถ่ายรูปเงินที่รับมา / Photo of cash collected</p>
 
           <input ref={cashInputRef} type="file" accept="image/*" onChange={handleCashImage} className="hidden" />
@@ -145,7 +160,7 @@ export default function NewLogPage() {
               className="w-full border border-gray-200 rounded-xl px-4 py-3 text-lg font-semibold text-gray-800 focus:outline-none focus:border-[#9575B5]"
             />
           </div>
-        </div>
+        </div>}
 
       </div>
 
