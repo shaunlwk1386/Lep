@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { saveLog } from "@/lib/db";
 import { compressImage } from "@/lib/ocr";
 import { supabase } from "@/lib/supabase";
@@ -112,6 +112,7 @@ export default function ReviewPage() {
   const [date, setDate] = useState(new Date().toISOString().split("T")[0]);
   const [commissionRate, setCommissionRate] = useState(50);
   const [saving, setSaving] = useState(false);
+  const saveInProgress = useRef(false);
   const [logImageUrl, setLogImageUrl] = useState<string | null>(null);
   const [cashImageUrl, setCashImageUrl] = useState<string | null>(null);
 
@@ -180,6 +181,8 @@ export default function ReviewPage() {
   }
 
   async function handleSave() {
+    if (saveInProgress.current) return;
+    saveInProgress.current = true;
     setSaving(true);
     try {
       const [logUrl, cashUrl] = await Promise.all([
@@ -210,6 +213,7 @@ export default function ReviewPage() {
       alert("Error: " + (e instanceof Error ? e.message : String(e)));
     } finally {
       setSaving(false);
+      saveInProgress.current = false;
     }
   }
 
