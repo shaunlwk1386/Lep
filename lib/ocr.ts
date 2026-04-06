@@ -73,7 +73,7 @@ function parseLines(rawText: string): DetectedService[] {
     const bracketContent = line.match(/\(([^)]+)\)?/)
     const checkText = bracketContent ? bracketContent[1] : line
     // เง = start of เงินสด (money) — catches garbled variants like เงนล์ด
-    if (/เงินสด|เงนสด|เง[นง]|สด|cash/i.test(checkText)) payment = 'cash'
+    if (/เงินสด|เงนสด|เง[นง]|งน|สด|cash/i.test(checkText)) payment = 'cash'
 
     // Rule 4: Strip bracket section and find numbers between 50-2000
     const lineNoBracket = line.replace(/\([^)]*\)?$/g, ' ')
@@ -106,7 +106,7 @@ function parseLines(rawText: string): DetectedService[] {
 export async function runOcr(imageFile: File): Promise<OcrResult> {
   const preprocessed = await preprocessImage(imageFile)
 
-  const { data } = await Tesseract.recognize(preprocessed, 'tha+eng', {
+  const { data } = await Tesseract.recognize(preprocessed, 'tha', {
     logger: () => {},
   })
 
