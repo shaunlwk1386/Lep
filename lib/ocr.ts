@@ -466,8 +466,7 @@ async function runMultiAttemptOcr(file: File): Promise<{
         // Tune: add or remove setParameters keys here (see Tesseract docs).
         await worker.setParameters({
           tessedit_pageseg_mode: plan.config.psm,
-          // preserve_interword_spaces: '1', // uncomment to keep word spacing
-          // user_defined_dpi: '300',         // uncomment if DPI warnings appear
+          user_defined_dpi: '150', // prevents DPI warning and forces model initialisation
         })
 
         const { data } = await worker.recognize(blob)
@@ -664,12 +663,18 @@ export async function runOcr(imageFile: File): Promise<OcrResult> {
     }
   }
 
-  // ── Fallback path: original single-pass OCR (v2 behavior, unchanged) ──────
+  // ── Fallback path: single-pass OCR using same createWorker path for consistency ──
   if (!rawText) {
     try {
       const preprocessed = await preprocessImage(imageFile)
-      const { data } = await Tesseract.recognize(preprocessed, 'tha', { logger: () => {} })
-      rawText = data.text.trim()
+      const fallbackWorker = await createWorker('tha', 1, { logger: () => {} })
+      try {
+        await fallbackWorker.setParameters({ user_defined_dpi: '150' })
+        const { data } = await fallbackWorker.recognize(preprocessed)
+        rawText = data.text.trim()
+      } finally {
+        await fallbackWorker.terminate()
+      }
     } catch (e) {
       console.error('[OCR] Fallback single-pass also failed:', e)
       rawText = ''
