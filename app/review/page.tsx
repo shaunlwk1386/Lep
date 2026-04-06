@@ -124,6 +124,18 @@ export default function ReviewPage() {
       const ocr = JSON.parse(ocrRaw);
       setRawText(ocr.rawText ?? "");
       setExtractedNumbers(ocr.numbers ?? []);
+
+      // Pre-fill services from detected lines
+      if (ocr.detectedServices && ocr.detectedServices.length > 0) {
+        setServices(
+          ocr.detectedServices.map((s: { description: string; amount: number; payment: 'cash' | 'transfer' }, i: number) => ({
+            id: Date.now() + i,
+            description: s.description,
+            amount: s.amount,
+            payment: s.payment,
+          }))
+        );
+      }
     }
     if (logUrl) setLogImageUrl(logUrl);
     if (cashUrl) setCashImageUrl(cashUrl);
