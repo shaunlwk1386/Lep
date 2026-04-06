@@ -61,22 +61,41 @@ function parseLines(rawText: string): DetectedService[] {
   const results: DetectedService[] = []
 
   for (const line of lines) {
-    // Skip lines that look like totals/summaries
-    if (/รวม|total|50%|=/i.test(line)) continue
+    // Rule 1: Skip summary/total lines
+    if (/รวม|total|50%|=|%/.test(line)) continue
 
-    // Extract number from line (price)
-    const numMatch = line.match(/(\d{2,6})/)
-    if (!numMatch) continue
-    const amount = Number(numMatch[1])
-    if (amount < 50 || amount > 50000) continue
+    // Rule 2: Skip lines with no Thai characters (likely noise)
+    if (!/[\u0E00-\u0E7F]/.test(line)) continue
 
-    // Detect payment method
+    // Rule 3: Extract payment from brackets at end of line — (เงินสด) or (โอน)
     let payment: 'cash' | 'transfer' = 'transfer'
-    if (/เงินสด|สด|cash/i.test(line)) payment = 'cash'
-    if (/โอน|transfer/i.test(line)) payment = 'transfer'
+    const bracketMatch = line.match(/\(([^)]+)\)\s*$/)
+    if (bracketMatch) {
+      const bracketText = bracketMatch[1]
+      if (/เงินสด|สด|cash/i.test(bracketText)) payment = 'cash'
+      else if (/โอน|transfer/i.test(bracketText)) payment = 'transfer'
+    }
 
-    // Match service name
-    const matched = matchService(line)
+    // Rule 4: Extract number that appears before บาท/บ or at end of line before bracket
+    // Pattern: Thai text ... NUMBER บาท (payment)
+    const priceMatch = line.match(/(\d{2,4})\s*(?:บาท|บ\.?)\s*(?:\([^)]*\))?$/) ||
+                       line.match(/(\d{2,4})\s*(?:\([^)]*\))?$/)
+    if (!priceMatch) continue
+
+    const amount = Number(priceMatch[1])
+
+    // Rule 5: Nail service price range — 50 to 2000 baht only
+    if (amount < 50 || amount > 2000) continue
+
+    // Rule 6: Extract service text — everything BEFORE the number
+    const numberIndex = line.lastIndexOf(priceMatch[1])
+    const serviceText = line.slice(0, numberIndex).trim()
+
+    // Rule 7: Service text must have some Thai content
+    if (!/[\u0E00-\u0E7F]/.test(serviceText)) continue
+
+    // Rule 8: Match service name from known list using only the service text
+    const matched = matchService(serviceText)
     const description = matched ? matched.th : ''
 
     results.push({ description, amount, payment })
