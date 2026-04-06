@@ -109,9 +109,13 @@ export default function DashboardPage() {
   return (
     <div className="w-full max-w-md mx-auto px-5 pb-24 pt-8 min-h-screen">
       {/* Header */}
-      <div className="mb-6">
+      <div className="mb-6 relative">
+        <img
+          src="/sunflower.webp"
+          alt=""
+          className="absolute -top-4 right-0 w-24 h-24 object-contain opacity-90 pointer-events-none"
+        />
         <div className="flex items-baseline gap-2">
-          <span className="text-2xl">🌻</span>
           <h1 className="text-2xl font-bold text-gray-900">เล็บ</h1>
           <span className="text-xs text-gray-600">Lep by egg v1.0</span>
         </div>
