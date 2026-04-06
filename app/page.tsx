@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useState, useEffect } from "react";
 import { getLogs, type DailyLog } from "@/lib/db";
 
@@ -110,10 +111,12 @@ export default function DashboardPage() {
     <div className="w-full max-w-md mx-auto px-5 pb-24 pt-8 min-h-screen">
       {/* Header */}
       <div className="mb-6 relative">
-        <img
+        <Image
           src="/sunflower.webp"
           alt=""
-          className="absolute -top-4 right-0 w-24 h-24 object-contain opacity-90 pointer-events-none"
+          width={96}
+          height={96}
+          className="absolute -top-4 right-0 opacity-90 pointer-events-none"
         />
         <div className="flex items-baseline gap-2">
           <h1 className="text-2xl font-bold text-gray-900">เล็บ</h1>
