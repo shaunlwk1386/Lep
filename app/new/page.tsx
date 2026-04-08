@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useRef } from "react";
 import { runOcr } from "@/lib/ocr";
+import { saveLog } from "@/lib/db";
 
 export default function NewLogPage() {
   const [logImage, setLogImage] = useState<File | null>(null);
@@ -41,9 +42,16 @@ export default function NewLogPage() {
 
     try {
       if (isOffDay) {
-        // Off-day: skip OCR, pre-fill review with fixed 350b commission
-        sessionStorage.setItem("off_day", "true");
-        router.push("/review");
+        // Off-day: save directly with ฿0, no services, no commission
+        const today = new Date().toISOString().split("T")[0];
+        await saveLog({
+          date: today,
+          services: [{ id: "off-day", description: "วันหยุด / Off Day", amount: 0, payment: "transfer" }],
+          total_amount: 0,
+          cash_amount: 0,
+          commission_rate: 0,
+        });
+        window.location.href = "/";
         return;
       }
 

@@ -52,18 +52,23 @@ function isOffDay(log: DailyLog): boolean {
 function sumLogs(logs: DailyLog[]) {
   return logs.reduce(
     (acc, log) => {
-      const offDay = isOffDay(log)
+      // Off day = ฿0, not counted anywhere
+      if (isOffDay(log)) return acc
+
       const dailyCommission = Math.round(log.total_amount * (log.commission_rate / 100))
 
-      if (offDay || dailyCommission < BASIC_SALARY) {
-        // Day pays basic salary — don't count revenue as cash/transfer
+      // Worked day but commission under ฿350 — gets basic salary instead
+      if (dailyCommission < BASIC_SALARY) {
         return {
           ...acc,
+          total: acc.total + log.total_amount,
+          cash: acc.cash + log.cash_amount,
+          transferred: acc.transferred + (log.total_amount - log.cash_amount),
           basicSalary: acc.basicSalary + BASIC_SALARY,
         }
       }
 
-      // Commission day — count revenue and commission normally
+      // Normal commission day
       return {
         ...acc,
         total: acc.total + log.total_amount,
